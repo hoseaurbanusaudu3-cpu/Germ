@@ -242,8 +242,8 @@ const getStudentResult = async (req, res, next) => {
     const result = await CompiledResult.findOne({
       where,
       include: [
-        { model: Student },
-        { model: Class },
+        { model: Student, include: [{ model: User, as: 'parent' }] },
+        { model: Class, include: [{ model: User, as: 'classTeacher' }] },
         { model: Term },
         { model: Session },
         { model: Affective },
@@ -283,8 +283,8 @@ const downloadResultPDF = async (req, res, next) => {
     const result = await CompiledResult.findOne({
       where: { student_id: studentId, term_id: termId, session_id: sessionId, status: 'approved' },
       include: [
-        { model: Student },
-        { model: Class },
+        { model: Student, include: [{ model: User, as: 'parent' }] },
+        { model: Class, include: [{ model: User, as: 'classTeacher' }] },
         { model: Term },
         { model: Session },
         { model: Affective },

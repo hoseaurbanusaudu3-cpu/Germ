@@ -54,6 +54,19 @@ const generateResultHTML = (data) => {
     school
   } = data;
 
+  // Calculate class statistics
+  const classTotalStudents = compiledResult.total_students || 0;
+  const classAverage = compiledResult.average || 0;
+  const studentPosition = compiledResult.position || 0;
+  const totalAttendance = compiledResult.times_present + compiledResult.times_absent;
+  const attendanceRate = totalAttendance > 0 ? Math.round((compiledResult.times_present / totalAttendance) * 100) : 0;
+
+  // Get subject teacher names from scores
+  const subjectTeachers = scores.map(score => {
+    const teacher = score.Subject?.teacher_id ? score.Subject.teacher_id : 'N/A';
+    return { subject: score.Subject?.name || 'N/A', teacher };
+  });
+
   return `
     <!DOCTYPE html>
     <html>
@@ -93,8 +106,14 @@ const generateResultHTML = (data) => {
           margin-bottom: 5px;
         }
         
-        .school-motto {
-          font-style: italic;
+        .school-address {
+          font-size: 14px;
+          color: #7f8c8d;
+          margin-bottom: 5px;
+        }
+        
+        .school-email {
+          font-size: 12px;
           color: #7f8c8d;
           margin-bottom: 10px;
         }
@@ -238,6 +257,32 @@ const generateResultHTML = (data) => {
         .grade-e { color: #d35400; font-weight: bold; }
         .grade-f { color: #c0392b; font-weight: bold; }
         
+        .next-term-info {
+          margin: 20px 0;
+          padding: 10px;
+          background: #fff3cd;
+          border: 1px solid #ffeaa7;
+          border-radius: 5px;
+        }
+        
+        .next-term-label {
+          font-weight: bold;
+          color: #856404;
+        }
+        
+        .promotion-status {
+          margin: 20px 0;
+          padding: 10px;
+          background: #d4edda;
+          border: 1px solid #c3e6cb;
+          border-radius: 5px;
+        }
+        
+        .promotion-label {
+          font-weight: bold;
+          color: #155724;
+        }
+        
         @media print {
           .container {
             padding: 0;
@@ -250,7 +295,8 @@ const generateResultHTML = (data) => {
         <!-- Header -->
         <div class="header">
           <div class="school-name">${school.name || 'GRACELAND ROYAL ACADEMY GOMBE'}</div>
-          <div class="school-motto">${school.motto || 'Wisdom & Illumination'}</div>
+          <div class="school-address">${school.address || 'No. 1 Graceland Avenue, Gombe'}</div>
+          <div class="school-email">${school.email || 'info@gracelandroyalacademy.com'}</div>
           <div class="report-title">STUDENT REPORT CARD</div>
         </div>
         
@@ -260,11 +306,13 @@ const generateResultHTML = (data) => {
             <div><span class="info-label">Name:</span> ${student.full_name}</div>
             <div><span class="info-label">Reg. No:</span> ${student.reg_no}</div>
             <div><span class="info-label">Class:</span> ${classInfo.name}</div>
+            <div><span class="info-label">No. in Class:</span> ${classTotalStudents}</div>
           </div>
           <div class="info-group">
             <div><span class="info-label">Session:</span> ${session.name}</div>
             <div><span class="info-label">Term:</span> ${term.name}</div>
             <div><span class="info-label">Gender:</span> ${student.gender}</div>
+            <div><span class="info-label">Parent/Guardian:</span> ${student.parent?.name || 'N/A'}</div>
           </div>
         </div>
         
@@ -280,6 +328,7 @@ const generateResultHTML = (data) => {
               <th>Grade</th>
               <th>Remark</th>
               <th>Class Avg</th>
+              <th>Subject Teacher</th>
             </tr>
           </thead>
           <tbody>
@@ -293,6 +342,7 @@ const generateResultHTML = (data) => {
                 <td class="grade-${score.grade.toLowerCase()}">${score.grade}</td>
                 <td>${score.remark}</td>
                 <td>${score.class_average || '-'}</td>
+                <td>${score.Subject.teacher_id || 'N/A'}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -310,11 +360,11 @@ const generateResultHTML = (data) => {
           </div>
           <div class="summary-box">
             <div class="summary-label">Position</div>
-            <div class="summary-value">${compiledResult.position}/${compiledResult.total_students}</div>
+            <div class="summary-value">${studentPosition}/${classTotalStudents}</div>
           </div>
           <div class="summary-box">
             <div class="summary-label">Attendance</div>
-            <div class="summary-value">${compiledResult.times_present}/${compiledResult.times_present + compiledResult.times_absent}</div>
+            <div class="summary-value">${attendanceRate}%</div>
           </div>
         </div>
         
@@ -350,6 +400,20 @@ const generateResultHTML = (data) => {
         </div>
         ` : ''}
         
+        <!-- Next Term Begins -->
+        ${term.next_term_begins ? `
+        <div class="next-term-info">
+          <div class="next-term-label">Next Term Begins:</div>
+          <div>${new Date(term.next_term_begins).toLocaleDateString()}</div>
+        </div>
+        ` : ''}
+        
+        <!-- Promotion Status -->
+        <div class="promotion-status">
+          <div class="promotion-label">Promotion Status:</div>
+          <div>${compiledResult.promotion_status || 'Promoted to Next Class'}</div>
+        </div>
+        
         <!-- Comments -->
         <div class="comments-section">
           ${compiledResult.class_teacher_comment ? `
@@ -370,10 +434,12 @@ const generateResultHTML = (data) => {
         <!-- Signatures -->
         <div class="signature-section">
           <div class="signature-box">
-            <div class="signature-line">Class Teacher</div>
+            <div class="signature-line">${classInfo.classTeacher?.name || 'Class Teacher'}</div>
+            <div>Class Teacher</div>
           </div>
           <div class="signature-box">
-            <div class="signature-line">Principal</div>
+            <div class="signature-line">${school.principal || 'Principal'}</div>
+            <div>Principal</div>
           </div>
         </div>
         
