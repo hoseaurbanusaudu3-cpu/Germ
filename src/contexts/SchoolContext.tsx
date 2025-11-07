@@ -791,8 +791,7 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
   const compileResult = (result: Omit<CompiledResult, 'id'>) => {
     const newId = compiledResults.length > 0 ? Math.max(...compiledResults.map(r => r.id)) + 1 : 1;
     
-    // Get class info for additional fields
-    const classInfo = classes.find(c => c.id === result.classId);
+    // Get teacher info for additional fields
     const teacherInfo = teachers.find(t => t.id === result.compiledBy);
     
     // Calculate class average from all students' scores
@@ -1022,7 +1021,7 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const getAllNotifications = (userId: number, userRole: string): Notification[] => {
+  const getAllNotifications = (_userId: number, userRole: string): Notification[] => {
     return notifications.filter(n => {
       return n.targetAudience === 'all' || n.targetAudience === userRole + 's';
     }).sort((a, b) => new Date(b.sentDate).getTime() - new Date(a.sentDate).getTime());
@@ -1299,7 +1298,6 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
     getActivityLogs,
     promoteStudent,
     promoteMultipleStudents,
-    compileResult,
     addCompiledResult: compileResult, // Alias for consistency
   };
 

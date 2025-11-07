@@ -2,8 +2,8 @@ require('dotenv').config();
 
 module.exports = {
   env: process.env.NODE_ENV || 'development',
-  port: process.env.PORT || 5000,
-  apiUrl: process.env.API_URL || 'http://localhost:5000',
+  port: process.env.PORT || 8080,
+  apiUrl: process.env.API_URL || 'http://localhost:8080',
   
   // Database
   db: {

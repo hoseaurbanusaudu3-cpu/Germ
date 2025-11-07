@@ -1,0 +1,58 @@
+version: "3.8"
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    restart: always
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://backend:8080/api
+      - REACT_APP_SOCKET_URL=http://backend:8080
+    depends_on:
+      - backend
+    networks:
+      - graceland-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=mysql
+      - DB_USER=root
+      - DB_PASS=root
+      - DB_NAME=graceland
+      - JWT_SECRET=graceland_secret
+      - NODE_ENV=production
+      - PORT=8080
+      - CORS_ORIGIN=http://frontend:80,http://localhost:3000
+    depends_on:
+      - mysql
+    networks:
+      - graceland-network
+
+  mysql:
+    image: mysql:8
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: graceland
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - graceland-network
+
+volumes:
+  db_data:
+
+networks:
+  graceland-network:
+    driver: bridge

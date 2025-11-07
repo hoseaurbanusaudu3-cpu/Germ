@@ -33,14 +33,6 @@ module.exports = (sequelize, DataTypes) => {
     next_term_begins: {
       type: DataTypes.DATE,
       allowNull: true
-    },
-    end_date: {
-      type: DataTypes.DATE,
-      allowNull: true
-    },
-    next_term_begins: {
-      type: DataTypes.DATE,
-      allowNull: true
     }
   }, {
     tableName: 'terms',
