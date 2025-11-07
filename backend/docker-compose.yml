@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: graceland_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS:-rootpassword}
+      MYSQL_DATABASE: ${DB_NAME:-graceland_db}
+      MYSQL_USER: ${DB_USER:-graceland_user}
+      MYSQL_PASSWORD: ${DB_PASS:-graceland_pass}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./graceland_schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - graceland_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  backend:
+    build: .
+    container_name: graceland_backend
+    restart: unless-stopped
+    ports:
+      - "${PORT:-5000}:5000"
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-graceland_user}
+      DB_PASS: ${DB_PASS:-graceland_pass}
+      DB_NAME: ${DB_NAME:-graceland_db}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      PORT: 5000
+    volumes:
+      - ./uploads:/usr/src/app/uploads
+      - ./logs:/usr/src/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - graceland_network
+
+volumes:
+  mysql_data:
+
+networks:
+  graceland_network:
+    driver: bridge
