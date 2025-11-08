@@ -1,11 +1,14 @@
-import { useState } from "react";
-import { Search, Edit, Trash2, Eye, UserPlus, Link as LinkIcon } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Edit, Trash2, Eye, UserPlus, Link as LinkIcon, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Badge } from "../ui/badge";
-import { toast } from "sonner@2.0.3";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
+import { Label } from "../ui/label";
+import { toast } from "sonner";
+import { usersAPI } from "../../services/api";
 
 interface ManageParentsPageProps {
   onNavigateToLink?: () => void;
@@ -13,52 +16,87 @@ interface ManageParentsPageProps {
 
 export function ManageParentsPage({ onNavigateToLink }: ManageParentsPageProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [parents, setParents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedParent, setSelectedParent] = useState<any>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    status: "active"
+  });
 
-  const parents = [
-    { 
-      id: 1, 
-      name: "Mr. Mohammed Ali", 
-      email: "mohammed.ali@example.com", 
-      phone: "08012345678", 
-      linkedChildren: 2,
-      status: "Active" 
-    },
-    { 
-      id: 2, 
-      name: "Dr. Yusuf Ibrahim", 
-      email: "yusuf.ibrahim@example.com", 
-      phone: "08023456789", 
-      linkedChildren: 1,
-      status: "Active" 
-    },
-    { 
-      id: 3, 
-      name: "Mrs. Hassan Zainab", 
-      email: "hassan.zainab@example.com", 
-      phone: "08034567890", 
-      linkedChildren: 3,
-      status: "Active" 
-    },
-    { 
-      id: 4, 
-      name: "Alhaji Abubakar Musa", 
-      email: "abubakar.musa@example.com", 
-      phone: "08045678901", 
-      linkedChildren: 0,
-      status: "Active" 
-    },
-  ];
+  // Load parents from API
+  useEffect(() => {
+    loadParents();
+  }, []);
 
-  const handleEdit = (parentId: number) => {
-    toast.info(`Editing parent ID: ${parentId}`);
+  const loadParents = async () => {
+    try {
+      setLoading(true);
+      const response = await usersAPI.getAll();
+      if (response.success) {
+        // Filter only parent users
+        const parentUsers = response.data.filter((user: any) => user.role === 'parent');
+        setParents(parentUsers);
+      }
+    } catch (error: any) {
+      console.error('Error loading parents:', error);
+      toast.error('Failed to load parents');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (parentId: number) => {
-    toast.error(`Parent ID: ${parentId} removed`);
+  const handleView = (parent: any) => {
+    setSelectedParent(parent);
+    setIsViewDialogOpen(true);
   };
 
-  const handleView = (parentId: number) => {
-    toast.info(`Viewing details for parent ID: ${parentId}`);
+  const handleEdit = (parent: any) => {
+    setSelectedParent(parent);
+    setEditFormData({
+      name: parent.name || "",
+      email: parent.email || "",
+      phone: parent.phone || "",
+      status: parent.status || "active"
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedParent) return;
+
+    try {
+      const response = await usersAPI.update(selectedParent.id, editFormData);
+      if (response.success) {
+        toast.success('Parent updated successfully');
+        setIsEditDialogOpen(false);
+        loadParents(); // Reload the list
+      }
+    } catch (error: any) {
+      console.error('Error updating parent:', error);
+      toast.error(error.response?.data?.message || 'Failed to update parent');
+    }
+  };
+
+  const handleDelete = async (parentId: number, parentName: string) => {
+    if (!confirm(`Are you sure you want to delete ${parentName}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await usersAPI.delete(parentId);
+      if (response.success) {
+        toast.success('Parent deleted successfully');
+        loadParents(); // Reload the list
+      }
+    } catch (error: any) {
+      console.error('Error deleting parent:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete parent');
+    }
   };
 
   const handleLinkChild = () => {
@@ -70,9 +108,9 @@ export function ManageParentsPage({ onNavigateToLink }: ManageParentsPageProps) 
   };
 
   const filteredParents = parents.filter(parent =>
-    parent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    parent.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    parent.phone.includes(searchTerm)
+    parent.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    parent.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    parent.phone?.includes(searchTerm)
   );
 
   return (
@@ -126,59 +164,74 @@ export function ManageParentsPage({ onNavigateToLink }: ManageParentsPageProps) 
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredParents.map((parent) => (
-                  <TableRow key={parent.id} className="bg-[#0F243E] border-b border-white/5 hover:bg-[#132C4A]">
-                    <TableCell className="text-white">{parent.name}</TableCell>
-                    <TableCell className="text-[#C0C8D3]">{parent.email}</TableCell>
-                    <TableCell className="text-[#C0C8D3]">{parent.phone}</TableCell>
-                    <TableCell>
-                      <Badge className={parent.linkedChildren > 0 ? "bg-[#28A745] text-white border-0" : "bg-[#DC3545] text-white border-0"}>
-                        {parent.linkedChildren} {parent.linkedChildren === 1 ? "child" : "children"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className="bg-[#28A745] text-white border-0">
-                        {parent.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center gap-2">
-                        <Button
-                          onClick={() => handleView(parent.id)}
-                          size="sm"
-                          className="h-8 w-8 p-0 bg-[#1E90FF] hover:bg-[#00BFFF] rounded-lg"
-                          title="View Details"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          onClick={handleLinkChild}
-                          size="sm"
-                          className="h-8 w-8 p-0 bg-[#28A745] hover:bg-[#28A745]/90 rounded-lg"
-                          title="Link to Child"
-                        >
-                          <LinkIcon className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          onClick={() => handleEdit(parent.id)}
-                          size="sm"
-                          className="h-8 w-8 p-0 bg-[#FFC107] hover:bg-[#FFC107]/90 rounded-lg"
-                          title="Edit Parent"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          onClick={() => handleDelete(parent.id)}
-                          size="sm"
-                          className="h-8 w-8 p-0 bg-[#DC3545] hover:bg-[#DC3545]/90 rounded-lg"
-                          title="Delete Parent"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#1E90FF]" />
+                      <p className="text-[#C0C8D3] mt-2">Loading parents...</p>
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : filteredParents.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      <p className="text-[#C0C8D3]">No parents found</p>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredParents.map((parent) => (
+                    <TableRow key={parent.id} className="bg-[#0F243E] border-b border-white/5 hover:bg-[#132C4A]">
+                      <TableCell className="text-white">{parent.name}</TableCell>
+                      <TableCell className="text-[#C0C8D3]">{parent.email}</TableCell>
+                      <TableCell className="text-[#C0C8D3]">{parent.phone || 'N/A'}</TableCell>
+                      <TableCell>
+                        <Badge className="bg-[#1E90FF] text-white border-0">
+                          0 children
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={parent.status === 'active' ? "bg-[#28A745] text-white border-0" : "bg-[#DC3545] text-white border-0"}>
+                          {parent.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button
+                            onClick={() => handleView(parent)}
+                            size="sm"
+                            className="h-8 w-8 p-0 bg-[#1E90FF] hover:bg-[#00BFFF] rounded-lg"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            onClick={handleLinkChild}
+                            size="sm"
+                            className="h-8 w-8 p-0 bg-[#28A745] hover:bg-[#28A745]/90 rounded-lg"
+                            title="Link to Child"
+                          >
+                            <LinkIcon className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            onClick={() => handleEdit(parent)}
+                            size="sm"
+                            className="h-8 w-8 p-0 bg-[#FFC107] hover:bg-[#FFC107]/90 rounded-lg"
+                            title="Edit Parent"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            onClick={() => handleDelete(parent.id, parent.name)}
+                            size="sm"
+                            className="h-8 w-8 p-0 bg-[#DC3545] hover:bg-[#DC3545]/90 rounded-lg"
+                            title="Delete Parent"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
@@ -190,28 +243,127 @@ export function ManageParentsPage({ onNavigateToLink }: ManageParentsPageProps) 
         <Card className="rounded-xl bg-[#132C4A] border border-white/10 shadow-lg">
           <CardContent className="p-4">
             <p className="text-[#C0C8D3] mb-1">Total Parents</p>
-            <p className="text-white">240</p>
-          </CardContent>
-        </Card>
-        <Card className="rounded-xl bg-[#132C4A] border border-white/10 shadow-lg">
-          <CardContent className="p-4">
-            <p className="text-[#C0C8D3] mb-1">With Linked Children</p>
-            <p className="text-[#28A745]">213</p>
-          </CardContent>
-        </Card>
-        <Card className="rounded-xl bg-[#132C4A] border border-white/10 shadow-lg">
-          <CardContent className="p-4">
-            <p className="text-[#C0C8D3] mb-1">Without Links</p>
-            <p className="text-[#FFC107]">27</p>
+            <p className="text-white text-2xl font-bold">{parents.length}</p>
           </CardContent>
         </Card>
         <Card className="rounded-xl bg-[#132C4A] border border-white/10 shadow-lg">
           <CardContent className="p-4">
             <p className="text-[#C0C8D3] mb-1">Active</p>
-            <p className="text-[#1E90FF]">240</p>
+            <p className="text-[#28A745] text-2xl font-bold">
+              {parents.filter(p => p.status === 'active').length}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="rounded-xl bg-[#132C4A] border border-white/10 shadow-lg">
+          <CardContent className="p-4">
+            <p className="text-[#C0C8D3] mb-1">Inactive</p>
+            <p className="text-[#DC3545] text-2xl font-bold">
+              {parents.filter(p => p.status === 'inactive').length}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="rounded-xl bg-[#132C4A] border border-white/10 shadow-lg">
+          <CardContent className="p-4">
+            <p className="text-[#C0C8D3] mb-1">Search Results</p>
+            <p className="text-[#1E90FF] text-2xl font-bold">{filteredParents.length}</p>
           </CardContent>
         </Card>
       </div>
+
+      {/* View Parent Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="bg-[#132C4A] text-white border-white/10">
+          <DialogHeader>
+            <DialogTitle>Parent Details</DialogTitle>
+            <DialogDescription className="text-[#C0C8D3]">
+              View complete information about this parent/guardian
+            </DialogDescription>
+          </DialogHeader>
+          {selectedParent && (
+            <div className="space-y-4">
+              <div>
+                <Label className="text-[#C0C8D3]">Name</Label>
+                <p className="text-white font-medium">{selectedParent.name}</p>
+              </div>
+              <div>
+                <Label className="text-[#C0C8D3]">Email</Label>
+                <p className="text-white">{selectedParent.email}</p>
+              </div>
+              <div>
+                <Label className="text-[#C0C8D3]">Phone</Label>
+                <p className="text-white">{selectedParent.phone || 'N/A'}</p>
+              </div>
+              <div>
+                <Label className="text-[#C0C8D3]">Status</Label>
+                <Badge className={selectedParent.status === 'active' ? "bg-[#28A745]" : "bg-[#DC3545]"}>
+                  {selectedParent.status}
+                </Badge>
+              </div>
+              <div>
+                <Label className="text-[#C0C8D3]">Created</Label>
+                <p className="text-white">{new Date(selectedParent.created_at).toLocaleDateString()}</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Parent Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="bg-[#132C4A] text-white border-white/10">
+          <DialogHeader>
+            <DialogTitle>Edit Parent</DialogTitle>
+            <DialogDescription className="text-[#C0C8D3]">
+              Update parent/guardian information
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-name">Name</Label>
+              <Input
+                id="edit-name"
+                value={editFormData.name}
+                onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                className="bg-[#0F243E] border-white/10 text-white"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-email">Email</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={editFormData.email}
+                onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                className="bg-[#0F243E] border-white/10 text-white"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-phone">Phone</Label>
+              <Input
+                id="edit-phone"
+                value={editFormData.phone}
+                onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                className="bg-[#0F243E] border-white/10 text-white"
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+                className="border-white/10"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveEdit}
+                className="bg-[#1E90FF] hover:bg-[#00BFFF]"
+              >
+                Save Changes
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
