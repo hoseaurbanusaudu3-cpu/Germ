@@ -101,6 +101,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           userRole="System Admin"
           notificationCount={unreadNotifications.length}
           onLogout={onLogout}
+          onNotificationClick={() => setActiveItem("notifications")}
         />
 
         <main className="p-4 md:p-6 max-w-7xl mx-auto">

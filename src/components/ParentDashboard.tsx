@@ -132,6 +132,7 @@ export function ParentDashboard({ onLogout }: ParentDashboardProps) {
           userRole="Parent"
           notificationCount={unreadCount}
           onLogout={onLogout}
+          onNotificationClick={() => setActiveItem("notifications")}
         />
 
         <main className="p-4 md:p-6 max-w-7xl mx-auto">

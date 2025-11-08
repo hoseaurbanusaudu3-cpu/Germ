@@ -69,6 +69,7 @@ export function TeacherDashboard({ onLogout }: TeacherDashboardProps) {
           userRole={isClassTeacher ? "Class Teacher" : "Subject Teacher"}
           notificationCount={unreadNotifications.length}
           onLogout={onLogout}
+          onNotificationClick={() => setActiveItem("notifications")}
         />
 
         <main className="p-4 md:p-6 max-w-7xl mx-auto">

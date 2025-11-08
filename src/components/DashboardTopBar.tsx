@@ -7,9 +7,10 @@ interface DashboardTopBarProps {
   userRole: string;
   notificationCount?: number;
   onLogout?: () => void;
+  onNotificationClick?: () => void;
 }
 
-export function DashboardTopBar({ userName, userRole, notificationCount = 0, onLogout }: DashboardTopBarProps) {
+export function DashboardTopBar({ userName, userRole, notificationCount = 0, onLogout, onNotificationClick }: DashboardTopBarProps) {
   return (
     <header className="sticky top-0 z-20 bg-gradient-to-r from-[#2563EB] to-[#1D4ED8] border-b border-[#1E40AF]/50 shadow-lg backdrop-blur-sm">
       <div className="flex items-center justify-between px-4 md:px-6 py-4">
@@ -33,9 +34,13 @@ export function DashboardTopBar({ userName, userRole, notificationCount = 0, onL
         </div>
 
         {/* Right Side */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           {/* Notifications */}
-          <div className="relative cursor-pointer group">
+          <button
+            onClick={onNotificationClick}
+            className="relative cursor-pointer group"
+            title="View Notifications"
+          >
             <div className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-sm flex items-center justify-center transition-all shadow-sm ring-1 ring-white/10 hover:ring-white/20">
               <Bell className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
             </div>
@@ -44,24 +49,25 @@ export function DashboardTopBar({ userName, userRole, notificationCount = 0, onL
                 {notificationCount > 9 ? '9+' : notificationCount}
               </Badge>
             )}
-          </div>
+          </button>
 
           {/* User Profile */}
-          <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-sm flex items-center justify-center cursor-pointer hover:from-white/30 hover:to-white/20 transition-all shadow-sm ring-1 ring-white/20 group">
               <User className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
             </div>
           </div>
 
-          {/* Logout Button */}
+          {/* Logout Button - Now visible on mobile */}
           {onLogout && (
             <Button
               onClick={onLogout}
               variant="ghost"
-              className="hidden md:flex items-center gap-2 text-white hover:text-white hover:bg-white/20 rounded-xl px-4 py-2 h-10 transition-all ring-1 ring-white/10 hover:ring-white/20 backdrop-blur-sm shadow-sm"
+              className="flex items-center gap-2 text-white hover:text-white hover:bg-white/20 rounded-xl px-3 md:px-4 py-2 h-10 transition-all ring-1 ring-white/10 hover:ring-white/20 backdrop-blur-sm shadow-sm"
+              title="Logout"
             >
               <LogOut className="w-4 h-4" />
-              <span>Logout</span>
+              <span className="hidden sm:inline">Logout</span>
             </Button>
           )}
         </div>
