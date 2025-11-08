@@ -1,13 +1,14 @@
-import { useState } from "react";
-import { Search, Link as LinkIcon, Unlink, Users, UserCheck, Upload, CheckCircle, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Link as LinkIcon, Unlink, Users, UserCheck, Upload, CheckCircle, X, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 import { Badge } from "../ui/badge";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Switch } from "../ui/switch";
 import { Label } from "../ui/label";
+import { studentsAPI, usersAPI } from "../../services/api";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,74 +28,48 @@ export function LinkStudentParentPage() {
   const [notifyParent, setNotifyParent] = useState(true);
   const [showUnlinkDialog, setShowUnlinkDialog] = useState(false);
   const [unlinkChild, setUnlinkChild] = useState<any>(null);
+  const [students, setStudents] = useState<any[]>([]);
+  const [parents, setParents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data
-  const students = [
-    { 
-      id: 1, 
-      name: "Aisha Mohammed", 
-      admissionNo: "GRA/2024/001", 
-      class: "JSS 2A",
-      photo: null,
-      hasParent: false 
-    },
-    { 
-      id: 2, 
-      name: "Ibrahim Yusuf", 
-      admissionNo: "GRA/2024/002", 
-      class: "SS 1B",
-      photo: null,
-      hasParent: true 
-    },
-    { 
-      id: 3, 
-      name: "Fatima Abubakar", 
-      admissionNo: "GRA/2024/003", 
-      class: "Primary 5",
-      photo: null,
-      hasParent: false 
-    },
-  ];
+  useEffect(() => {
+    loadData();
+  }, []);
 
-  const parents = [
-    { 
-      id: 1, 
-      name: "Mr. Mohammed Ali", 
-      email: "mohammed.ali@example.com", 
-      phone: "08012345678",
-      linkedChildren: [
-        { name: "Aisha Mohammed", class: "JSS 2A", linkDate: "2024-09-01" },
-        { name: "Musa Mohammed", class: "Primary 3", linkDate: "2024-09-01" },
-      ]
-    },
-    { 
-      id: 2, 
-      name: "Dr. Yusuf Ibrahim", 
-      email: "yusuf.ibrahim@example.com", 
-      phone: "08023456789",
-      linkedChildren: [
-        { name: "Ibrahim Yusuf", class: "SS 1B", linkDate: "2024-08-15" },
-      ]
-    },
-    { 
-      id: 3, 
-      name: "Mrs. Hassan Zainab", 
-      email: "hassan.zainab@example.com", 
-      phone: "08034567890",
-      linkedChildren: []
-    },
-  ];
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [studentsRes, usersRes] = await Promise.all([
+        studentsAPI.getAll(),
+        usersAPI.getAll()
+      ]);
+
+      if (studentsRes.success) {
+        setStudents(studentsRes.data);
+      }
+
+      if (usersRes.success) {
+        const parentUsers = usersRes.data.filter((u: any) => u.role === 'parent');
+        setParents(parentUsers);
+      }
+    } catch (error: any) {
+      console.error('Error loading data:', error);
+      toast.error('Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredStudents = students.filter(s => 
-    s.name.toLowerCase().includes(studentSearch.toLowerCase()) ||
-    s.admissionNo.toLowerCase().includes(studentSearch.toLowerCase()) ||
-    s.class.toLowerCase().includes(studentSearch.toLowerCase())
+    s.full_name?.toLowerCase().includes(studentSearch.toLowerCase()) ||
+    s.reg_no?.toLowerCase().includes(studentSearch.toLowerCase()) ||
+    s.Class?.name?.toLowerCase().includes(studentSearch.toLowerCase())
   );
 
   const filteredParents = parents.filter(p => 
-    p.name.toLowerCase().includes(parentSearch.toLowerCase()) ||
-    p.email.toLowerCase().includes(parentSearch.toLowerCase()) ||
-    p.phone.includes(parentSearch)
+    p.name?.toLowerCase().includes(parentSearch.toLowerCase()) ||
+    p.email?.toLowerCase().includes(parentSearch.toLowerCase()) ||
+    p.phone?.includes(parentSearch)
   );
 
   const handleLinkStudentParent = () => {
