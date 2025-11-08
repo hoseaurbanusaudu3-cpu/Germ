@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LandingPage } from "./components/LandingPage";
 import { LoginPage } from "./components/LoginPage";
 import { AdminDashboard } from "./components/AdminDashboard";
@@ -13,9 +13,41 @@ type Page = "landing" | "login" | "dashboard" | "report-card";
 type Role = "" | "admin" | "teacher" | "accountant" | "parent";
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<Page>("landing");
-  const [userRole, setUserRole] = useState<Role>("");
+  // Initialize state from localStorage to persist across page refreshes
+  const [currentPage, setCurrentPage] = useState<Page>(() => {
+    const savedPage = localStorage.getItem('currentPage');
+    return (savedPage as Page) || "landing";
+  });
+  
+  const [userRole, setUserRole] = useState<Role>(() => {
+    const savedRole = localStorage.getItem('userRole');
+    return (savedRole as Role) || "";
+  });
+  
   const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('currentPage', currentPage);
+  }, [currentPage]);
+
+  useEffect(() => {
+    localStorage.setItem('userRole', userRole);
+  }, [userRole]);
+
+  // Check if user is authenticated on mount
+  useEffect(() => {
+    const authToken = localStorage.getItem('authToken');
+    const currentUser = localStorage.getItem('currentUser');
+    
+    // If no auth token but trying to access dashboard, redirect to login
+    if (!authToken || !currentUser) {
+      if (currentPage === 'dashboard' || currentPage === 'report-card') {
+        setCurrentPage('login');
+        setUserRole('');
+      }
+    }
+  }, []);
 
   const handlePageTransition = (page: Page, role?: Role) => {
     setIsTransitioning(true);
@@ -41,6 +73,11 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    // Clear localStorage on logout
+    localStorage.removeItem('currentPage');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('currentUser');
     handlePageTransition("landing", "");
   };
 
