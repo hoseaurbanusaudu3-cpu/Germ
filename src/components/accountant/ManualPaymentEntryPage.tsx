@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -7,9 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Textarea } from "../ui/textarea";
 import { Badge } from "../ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import { DollarSign, Search, Plus, Edit, Trash2, Save, X, Receipt, CreditCard, Banknote } from "lucide-react";
+import { DollarSign, Search, Plus, Edit, Trash2, Save, X, Receipt, CreditCard, Banknote, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useSchool } from "../../contexts/SchoolContext";
+import { paymentsAPI } from "../../services/api";
 
 interface PaymentEntry {
   id: number;
@@ -34,6 +35,8 @@ export function ManualPaymentEntryPage() {
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -45,8 +48,45 @@ export function ManualPaymentEntryPage() {
     notes: ""
   });
 
-  // Mock payment history (in real app, this would come from backend)
+  // Payment history from backend
   const [paymentHistory, setPaymentHistory] = useState<PaymentEntry[]>([]);
+
+  // Load payment history on mount
+  useEffect(() => {
+    loadPaymentHistory();
+  }, []);
+
+  const loadPaymentHistory = async () => {
+    try {
+      setIsLoading(true);
+      const response = await paymentsAPI.create({});
+      // This will get all payments - you can filter by date or status as needed
+      if (response.data) {
+        const formattedPayments = response.data.map((p: any) => ({
+          id: p.id,
+          studentId: p.student_id,
+          studentName: p.Student?.full_name || 'Unknown',
+          className: p.Class?.name || 'N/A',
+          amount: p.amount,
+          paymentMethod: p.method,
+          paymentDate: p.payment_date || p.created_at,
+          termId: p.term_id,
+          sessionId: p.session_id,
+          referenceNumber: p.reference,
+          bankName: p.bank_name,
+          notes: p.description,
+          recordedBy: currentUser?.name || 'Accountant',
+          recordedAt: p.created_at
+        }));
+        setPaymentHistory(formattedPayments);
+      }
+    } catch (error: any) {
+      console.error('Error loading payment history:', error);
+      // Don't show error toast on initial load
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Filter students based on search
   const filteredStudents = students.filter(student => 
@@ -78,7 +118,7 @@ export function ManualPaymentEntryPage() {
     setEditingId(null);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedStudent) {
       toast.error("Please select a student");
       return;
@@ -94,52 +134,76 @@ export function ManualPaymentEntryPage() {
       return;
     }
 
-    const studentClass = classes.find(c => c.id === selectedStudent.classId);
-    
-    const newPayment: PaymentEntry = {
-      id: isEditing ? editingId! : Date.now(),
-      studentId: selectedStudent.id,
-      studentName: `${selectedStudent.firstName} ${selectedStudent.lastName}`,
-      className: studentClass?.name || "N/A",
-      amount: parseFloat(formData.amount),
-      paymentMethod: formData.paymentMethod,
-      paymentDate: formData.paymentDate,
-      termId: currentTerm?.id || 0,
-      sessionId: currentAcademicYear?.id || 0,
-      referenceNumber: formData.referenceNumber || undefined,
-      bankName: formData.bankName || undefined,
-      notes: formData.notes || undefined,
-      recordedBy: currentUser?.name || "Accountant",
-      recordedAt: new Date().toISOString()
-    };
-
-    if (isEditing) {
-      setPaymentHistory(prev => 
-        prev.map(p => p.id === editingId ? newPayment : p)
-      );
-      toast.success("Payment record updated successfully");
-    } else {
-      setPaymentHistory(prev => [newPayment, ...prev]);
+    try {
+      setIsSaving(true);
       
-      // Add to SchoolContext
-      addPayment({
-        id: newPayment.id,
-        studentId: newPayment.studentId,
-        amount: newPayment.amount,
-        paymentMethod: newPayment.paymentMethod,
-        paymentDate: newPayment.paymentDate,
-        termId: newPayment.termId,
-        sessionId: newPayment.sessionId,
-        referenceNumber: newPayment.referenceNumber,
-        status: "completed",
-        recordedBy: newPayment.recordedBy,
-        notes: newPayment.notes
-      });
+      const studentClass = classes.find(c => c.id === selectedStudent.classId);
+      
+      // Prepare payment data for API
+      const paymentData = {
+        student_id: selectedStudent.id,
+        class_id: selectedStudent.classId,
+        session_id: currentAcademicYear?.id || 1,
+        term_id: currentTerm?.id || 1,
+        amount: parseFloat(formData.amount),
+        method: formData.paymentMethod,
+        reference: formData.referenceNumber || null,
+        bank_name: formData.bankName || null,
+        description: formData.notes || `Manual payment entry - ${formData.paymentMethod}`,
+        payment_date: formData.paymentDate
+      };
 
-      toast.success("Payment recorded successfully");
+      // Save to database via API
+      const response = await paymentsAPI.create(paymentData);
+      
+      if (response.success) {
+        const savedPayment = response.data;
+        
+        // Create payment entry for local state
+        const newPayment: PaymentEntry = {
+          id: savedPayment.id,
+          studentId: selectedStudent.id,
+          studentName: `${selectedStudent.firstName} ${selectedStudent.lastName}`,
+          className: studentClass?.name || "N/A",
+          amount: parseFloat(formData.amount),
+          paymentMethod: formData.paymentMethod,
+          paymentDate: formData.paymentDate,
+          termId: currentTerm?.id || 0,
+          sessionId: currentAcademicYear?.id || 0,
+          referenceNumber: formData.referenceNumber || undefined,
+          bankName: formData.bankName || undefined,
+          notes: formData.notes || undefined,
+          recordedBy: currentUser?.email || "Accountant",
+          recordedAt: new Date().toISOString()
+        };
+
+        // Update local state
+        setPaymentHistory(prev => [newPayment, ...prev]);
+        
+        // Also add to SchoolContext for immediate UI updates
+        addPayment({
+          id: savedPayment.id,
+          studentId: selectedStudent.id,
+          amount: parseFloat(formData.amount),
+          paymentMethod: formData.paymentMethod,
+          paymentDate: formData.paymentDate,
+          termId: currentTerm?.id || 0,
+          sessionId: currentAcademicYear?.id || 0,
+          referenceNumber: formData.referenceNumber,
+          status: "Verified",
+          recordedBy: currentUser?.email || "Accountant",
+          notes: formData.notes
+        });
+
+        toast.success("Payment recorded successfully and saved to database!");
+        resetForm();
+      }
+    } catch (error: any) {
+      console.error('Error saving payment:', error);
+      toast.error(error.response?.data?.message || "Failed to save payment. Please try again.");
+    } finally {
+      setIsSaving(false);
     }
-
-    resetForm();
   };
 
   const handleEdit = (payment: PaymentEntry) => {
@@ -398,12 +462,21 @@ export function ManualPaymentEntryPage() {
 
           {/* Action Buttons */}
           <div className="flex gap-2">
-            <Button onClick={handleSubmit} className="flex-1">
-              <Save className="h-4 w-4 mr-2" />
-              {isEditing ? "Update Payment" : "Record Payment"}
+            <Button onClick={handleSubmit} className="flex-1" disabled={isSaving}>
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  {isEditing ? "Update Payment" : "Record Payment"}
+                </>
+              )}
             </Button>
             {(isEditing || selectedStudent) && (
-              <Button variant="outline" onClick={resetForm}>
+              <Button variant="outline" onClick={resetForm} disabled={isSaving}>
                 <X className="h-4 w-4 mr-2" />
                 Cancel
               </Button>
