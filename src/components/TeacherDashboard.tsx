@@ -21,7 +21,9 @@ interface TeacherDashboardProps {
 export function TeacherDashboard({ onLogout }: TeacherDashboardProps) {
   const { currentUser, teachers, getTeacherAssignments, students, getUnreadNotifications } = useSchool();
   const [activeItem, setActiveItem] = useState("dashboard");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedClass, setSelectedClass] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedSubject, setSelectedSubject] = useState("");
 
   // Get current teacher data
