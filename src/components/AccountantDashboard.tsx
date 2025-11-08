@@ -12,7 +12,8 @@ import {
   BarChart3,
   Building2,
   Lock,
-  LogOut
+  LogOut,
+  Edit3
 } from "lucide-react";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardTopBar } from "./DashboardTopBar";
@@ -26,6 +27,7 @@ import { VerifyReceiptsPage } from "./accountant/VerifyReceiptsPage";
 import { SetFeesPage } from "./accountant/SetFeesPage";
 import { PaymentReportsPage } from "./accountant/PaymentReportsPage";
 import { BankAccountSettingsPage } from "./accountant/BankAccountSettingsPage";
+import { ManualPaymentEntryPage } from "./accountant/ManualPaymentEntryPage";
 import { ChangePasswordPage } from "./ChangePasswordPage";
 import { NotificationsPage } from "./NotificationsPage";
 import { useSchool } from "../contexts/SchoolContext";
@@ -55,6 +57,7 @@ export function AccountantDashboard({ onLogout }: AccountantDashboardProps) {
   const sidebarItems = [
     { icon: <LayoutDashboard className="w-5 h-5" />, label: "Dashboard", id: "dashboard" },
     { icon: <CreditCard className="w-5 h-5" />, label: "Set Fees", id: "set-fees" },
+    { icon: <Edit3 className="w-5 h-5" />, label: "Manual Payment Entry", id: "manual-payment" },
     { icon: <Receipt className="w-5 h-5" />, label: "Record Payments", id: "record-payments" },
     { icon: <CheckCircle className="w-5 h-5" />, label: "Verify Receipts", id: "verify-receipts" },
     { icon: <BarChart3 className="w-5 h-5" />, label: "Payment Reports", id: "payment-reports" },
@@ -357,6 +360,7 @@ export function AccountantDashboard({ onLogout }: AccountantDashboardProps) {
           )}
 
           {activeItem === "set-fees" && <SetFeesPage />}
+          {activeItem === "manual-payment" && <ManualPaymentEntryPage />}
           {activeItem === "record-payments" && <RecordPaymentPage />}
           {activeItem === "verify-receipts" && <VerifyReceiptsPage />}
           {activeItem === "payment-reports" && <PaymentReportsPage />}
