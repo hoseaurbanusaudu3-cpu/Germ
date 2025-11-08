@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Plus, Search, Edit, Trash2, BookOpen, Users, Link as LinkIcon,
-  X, Check, AlertCircle, MoreVertical, UserPlus
+  X, Check, AlertCircle, MoreVertical, UserPlus, Loader2
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Button } from "../ui/button";
@@ -13,8 +13,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Checkbox } from "../ui/checkbox";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { subjectsAPI } from "../../services/api";
 
 interface Subject {
   id: number;
@@ -49,9 +50,44 @@ export function ManageSubjectsPage() {
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data
-  const [subjects, setSubjects] = useState<Subject[]>([
+  // Load subjects from API
+  const [subjects, setSubjects] = useState<Subject[]>([]);  
+
+  useEffect(() => {
+    loadSubjects();
+  }, []);
+
+  const loadSubjects = async () => {
+    try {
+      setLoading(true);
+      const response = await subjectsAPI.getAll();
+      if (response.success) {
+        // Transform API data to match our interface
+        const transformedSubjects = response.data.map((sub: any) => ({
+          id: sub.id,
+          name: sub.name,
+          code: sub.code || 'N/A',
+          department: sub.department || 'General',
+          level: sub.level || 'Secondary',
+          assignedClasses: [],
+          assignedTeachers: [],
+          status: sub.status === 'active' ? 'Active' : 'Inactive',
+          isCore: sub.is_core || false
+        }));
+        setSubjects(transformedSubjects);
+      }
+    } catch (error: any) {
+      console.error('Error loading subjects:', error);
+      toast.error('Failed to load subjects');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Remove all fake data
+  const [fakeSubjects] = useState<Subject[]>([
     { 
       id: 1, 
       name: "Mathematics", 
@@ -225,55 +261,63 @@ export function ManageSubjectsPage() {
     assignedSubjects: subjects.filter(s => s.assignedClasses.length > 0).length,
   };
 
-  const handleCreateSubject = () => {
+  const handleCreateSubject = async () => {
     if (!formData.name || !formData.code || !formData.department || !formData.level) {
       toast.error("Please fill all required fields including school level");
       return;
     }
 
-    const newSubject: Subject = {
-      id: subjects.length + 1,
-      name: formData.name,
-      code: formData.code,
-      department: formData.department,
-      level: formData.level as "Primary" | "Secondary",
-      assignedClasses: [],
-      assignedTeachers: [],
-      status: formData.status,
-      isCore: formData.isCore,
-    };
+    try {
+      const subjectData = {
+        name: formData.name,
+        code: formData.code,
+        department: formData.department,
+        level: formData.level,
+        status: formData.status === 'Active' ? 'active' : 'inactive',
+        is_core: formData.isCore
+      };
 
-    setSubjects([...subjects, newSubject]);
-    toast.success(`Subject "${newSubject.name}" created successfully!`);
-    setIsCreateDialogOpen(false);
-    resetForm();
+      const response = await subjectsAPI.create(subjectData);
+      if (response.success) {
+        toast.success(`Subject "${formData.name}" created successfully!`);
+        setIsCreateDialogOpen(false);
+        resetForm();
+        loadSubjects(); // Reload the list
+      }
+    } catch (error: any) {
+      console.error('Error creating subject:', error);
+      toast.error(error.response?.data?.message || 'Failed to create subject');
+    }
   };
 
-  const handleEditSubject = () => {
+  const handleEditSubject = async () => {
     if (!selectedSubject || !formData.name || !formData.code || !formData.department || !formData.level) {
       toast.error("Please fill all required fields including school level");
       return;
     }
 
-    const updatedSubjects = subjects.map(subject =>
-      subject.id === selectedSubject.id
-        ? {
-            ...subject,
-            name: formData.name,
-            code: formData.code,
-            department: formData.department,
-            level: formData.level as "Primary" | "Secondary",
-            status: formData.status,
-            isCore: formData.isCore,
-          }
-        : subject
-    );
+    try {
+      const subjectData = {
+        name: formData.name,
+        code: formData.code,
+        department: formData.department,
+        level: formData.level,
+        status: formData.status === 'Active' ? 'active' : 'inactive',
+        is_core: formData.isCore
+      };
 
-    setSubjects(updatedSubjects);
-    toast.success(`Subject "${formData.name}" updated successfully!`);
-    setIsEditDialogOpen(false);
-    setSelectedSubject(null);
-    resetForm();
+      const response = await subjectsAPI.update(selectedSubject.id, subjectData);
+      if (response.success) {
+        toast.success(`Subject "${formData.name}" updated successfully!`);
+        setIsEditDialogOpen(false);
+        setSelectedSubject(null);
+        resetForm();
+        loadSubjects(); // Reload the list
+      }
+    } catch (error: any) {
+      console.error('Error updating subject:', error);
+      toast.error(error.response?.data?.message || 'Failed to update subject');
+    }
   };
 
   const handleAssignSubject = () => {
@@ -314,18 +358,21 @@ export function ManageSubjectsPage() {
     setAssignmentData({ selectedClasses: [], selectedTeachers: [] });
   };
 
-  const handleDeleteSubject = () => {
-    if (selectedSubject) {
-      if (selectedSubject.assignedClasses.length > 0) {
-        toast.error("Cannot delete subject with class assignments. Please remove assignments first.");
-        setDeleteDialogOpen(false);
-        return;
-      }
+  const handleDeleteSubject = async () => {
+    if (!selectedSubject) return;
 
-      setSubjects(subjects.filter(subject => subject.id !== selectedSubject.id));
-      toast.success(`Subject "${selectedSubject.name}" deleted successfully!`);
+    try {
+      const response = await subjectsAPI.delete(selectedSubject.id);
+      if (response.success) {
+        toast.success(`Subject "${selectedSubject.name}" deleted successfully!`);
+        setDeleteDialogOpen(false);
+        setSelectedSubject(null);
+        loadSubjects(); // Reload the list
+      }
+    } catch (error: any) {
+      console.error('Error deleting subject:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete subject');
       setDeleteDialogOpen(false);
-      setSelectedSubject(null);
     }
   };
 
