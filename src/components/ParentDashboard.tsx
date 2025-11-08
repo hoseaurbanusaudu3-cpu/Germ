@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LayoutDashboard, Users, FileText, CreditCard, Receipt, Bell, LogOut, Download, Upload, User, GraduationCap, Lock } from "lucide-react";
+import { LayoutDashboard, Users, FileText, CreditCard, Receipt, Bell, Download, Upload, User, GraduationCap } from "lucide-react";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { DashboardTopBar } from "./DashboardTopBar";
 import { Card, CardContent, CardHeader } from "./ui/card";
@@ -8,13 +8,13 @@ import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 import { PerformanceReportsPage } from "./parent/PerformanceReportsPage";
 import { ViewResultsPage } from "./parent/ViewResultsPage";
 import { PayFeePage } from "./parent/PayFeePage";
 import { ChangePasswordPage } from "./ChangePasswordPage";
 import { NotificationsPage } from "./NotificationsPage";
-import { StudentResultSheet } from "./StudentResultSheet";
+// import { StudentResultSheet } from "./StudentResultSheet";
 import { useSchool } from "../contexts/SchoolContext";
 
 interface ParentDashboardProps {
@@ -33,7 +33,7 @@ interface Child {
 export function ParentDashboard({ onLogout }: ParentDashboardProps) {
   const { currentUser, parents, students, getUnreadNotifications } = useSchool();
   const [activeItem, setActiveItem] = useState("dashboard");
-  const [selectedChild, setSelectedChild] = useState<Child | null>(null);
+  // const [selectedChild, setSelectedChild] = useState<Child | null>(null); // Reserved for future use
 
   // Get current parent
   const currentParent = currentUser ? parents.find((p) => p.id === currentUser.linkedId) : null;
