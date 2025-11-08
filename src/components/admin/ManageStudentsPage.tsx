@@ -1,12 +1,15 @@
-import { useState } from "react";
-import { Search, Edit, Trash2, Eye, UserPlus, Link as LinkIcon } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Edit, Trash2, Eye, UserPlus, Link as LinkIcon, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Badge } from "../ui/badge";
-import { toast } from "sonner@2.0.3";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Label } from "../ui/label";
+import { toast } from "sonner";
+import { studentsAPI, classesAPI } from "../../services/api";
 
 interface ManageStudentsPageProps {
   onNavigateToLink?: () => void;
@@ -15,25 +18,67 @@ interface ManageStudentsPageProps {
 export function ManageStudentsPage({ onNavigateToLink }: ManageStudentsPageProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterClass, setFilterClass] = useState("");
+  const [students, setStudents] = useState<any[]>([]);
+  const [classes, setClasses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
-  const students = [
-    { id: 1, name: "Aisha Mohammed", class: "JSS 2A", admissionNo: "GRA/2024/001", parent: "Mr. Mohammed Ali", status: "Active" },
-    { id: 2, name: "Ibrahim Yusuf", class: "SS 1B", admissionNo: "GRA/2024/002", parent: "Dr. Yusuf Ibrahim", status: "Active" },
-    { id: 3, name: "Fatima Abubakar", class: "Primary 5", admissionNo: "GRA/2024/003", parent: "Mr. Abubakar Ibrahim", status: "Active" },
-    { id: 4, name: "Musa Hassan", class: "JSS 3A", admissionNo: "GRA/2024/004", parent: "Mrs. Hassan Zainab", status: "Active" },
-    { id: 5, name: "Zainab Aliyu", class: "SS 2A", admissionNo: "GRA/2024/005", parent: "Alhaji Aliyu Musa", status: "Active" },
-  ];
+  useEffect(() => {
+    loadStudents();
+    loadClasses();
+  }, []);
 
-  const handleEdit = (studentId: number) => {
-    toast.info(`Editing student ID: ${studentId}`);
+  const loadStudents = async () => {
+    try {
+      setLoading(true);
+      const response = await studentsAPI.getAll();
+      if (response.success) {
+        setStudents(response.data);
+      }
+    } catch (error: any) {
+      console.error('Error loading students:', error);
+      toast.error('Failed to load students');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (studentId: number) => {
-    toast.error(`Student ID: ${studentId} removed`);
+  const loadClasses = async () => {
+    try {
+      const response = await classesAPI.getAll();
+      if (response.success) {
+        setClasses(response.data);
+      }
+    } catch (error: any) {
+      console.error('Error loading classes:', error);
+    }
   };
 
-  const handleView = (studentId: number) => {
-    toast.info(`Viewing details for student ID: ${studentId}`);
+  const handleView = (student: any) => {
+    setSelectedStudent(student);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleEdit = (student: any) => {
+    toast.info(`Edit functionality coming soon for ${student.full_name}`);
+  };
+
+  const handleDelete = async (studentId: number, studentName: string) => {
+    if (!confirm(`Are you sure you want to delete ${studentName}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await studentsAPI.delete(studentId);
+      if (response.success) {
+        toast.success('Student deleted successfully');
+        loadStudents();
+      }
+    } catch (error: any) {
+      console.error('Error deleting student:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete student');
+    }
   };
 
   const handleLinkToParent = () => {
@@ -107,55 +152,77 @@ export function ManageStudentsPage({ onNavigateToLink }: ManageStudentsPageProps
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {students.map((student) => (
-                  <TableRow key={student.id} className="bg-[#0F243E] border-b border-white/5 hover:bg-[#132C4A]">
-                    <TableCell className="text-[#C0C8D3]">{student.admissionNo}</TableCell>
-                    <TableCell className="text-white">{student.name}</TableCell>
-                    <TableCell className="text-[#C0C8D3]">{student.class}</TableCell>
-                    <TableCell className="text-[#C0C8D3]">{student.parent}</TableCell>
-                    <TableCell>
-                      <Badge className="bg-[#28A745] text-white border-0">
-                        {student.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-center gap-2">
-                        <Button
-                          onClick={() => handleView(student.id)}
-                          size="sm"
-                          className="h-8 w-8 p-0 bg-[#1E90FF] hover:bg-[#00BFFF] rounded-lg"
-                          title="View Details"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          onClick={handleLinkToParent}
-                          size="sm"
-                          className="h-8 w-8 p-0 bg-[#28A745] hover:bg-[#28A745]/90 rounded-lg"
-                          title="Link to Parent"
-                        >
-                          <LinkIcon className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          onClick={() => handleEdit(student.id)}
-                          size="sm"
-                          className="h-8 w-8 p-0 bg-[#FFC107] hover:bg-[#FFC107]/90 rounded-lg"
-                          title="Edit Student"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          onClick={() => handleDelete(student.id)}
-                          size="sm"
-                          className="h-8 w-8 p-0 bg-[#DC3545] hover:bg-[#DC3545]/90 rounded-lg"
-                          title="Delete Student"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      <Loader2 className="w-8 h-8 animate-spin mx-auto text-[#1E90FF]" />
+                      <p className="text-[#C0C8D3] mt-2">Loading students...</p>
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : students.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      <p className="text-[#C0C8D3]">No students found</p>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  students
+                    .filter(student => {
+                      const matchesSearch = student.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                          student.reg_no?.toLowerCase().includes(searchTerm.toLowerCase());
+                      const matchesClass = !filterClass || filterClass === 'all' || student.Class?.name?.includes(filterClass);
+                      return matchesSearch && matchesClass;
+                    })
+                    .map((student) => (
+                      <TableRow key={student.id} className="bg-[#0F243E] border-b border-white/5 hover:bg-[#132C4A]">
+                        <TableCell className="text-[#C0C8D3]">{student.reg_no || 'N/A'}</TableCell>
+                        <TableCell className="text-white">{student.full_name}</TableCell>
+                        <TableCell className="text-[#C0C8D3]">{student.Class?.name || 'N/A'}</TableCell>
+                        <TableCell className="text-[#C0C8D3]">Not linked</TableCell>
+                        <TableCell>
+                          <Badge className={student.status === 'active' ? "bg-[#28A745] text-white border-0" : "bg-[#DC3545] text-white border-0"}>
+                            {student.status || 'active'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-center gap-2">
+                            <Button
+                              onClick={() => handleView(student)}
+                              size="sm"
+                              className="h-8 w-8 p-0 bg-[#1E90FF] hover:bg-[#00BFFF] rounded-lg"
+                              title="View Details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              onClick={handleLinkToParent}
+                              size="sm"
+                              className="h-8 w-8 p-0 bg-[#28A745] hover:bg-[#28A745]/90 rounded-lg"
+                              title="Link to Parent"
+                            >
+                              <LinkIcon className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              onClick={() => handleEdit(student)}
+                              size="sm"
+                              className="h-8 w-8 p-0 bg-[#FFC107] hover:bg-[#FFC107]/90 rounded-lg"
+                              title="Edit Student"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              onClick={() => handleDelete(student.id, student.full_name)}
+                              size="sm"
+                              className="h-8 w-8 p-0 bg-[#DC3545] hover:bg-[#DC3545]/90 rounded-lg"
+                              title="Delete Student"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                )}
               </TableBody>
             </Table>
           </div>
@@ -167,28 +234,73 @@ export function ManageStudentsPage({ onNavigateToLink }: ManageStudentsPageProps
         <Card className="rounded-xl bg-[#132C4A] border border-white/10 shadow-lg">
           <CardContent className="p-4">
             <p className="text-[#C0C8D3] mb-1">Total Students</p>
-            <p className="text-white">1,245</p>
+            <p className="text-white text-2xl font-bold">{students.length}</p>
           </CardContent>
         </Card>
         <Card className="rounded-xl bg-[#132C4A] border border-white/10 shadow-lg">
           <CardContent className="p-4">
             <p className="text-[#C0C8D3] mb-1">Active</p>
-            <p className="text-[#28A745]">1,198</p>
+            <p className="text-[#28A745] text-2xl font-bold">
+              {students.filter(s => s.status === 'active').length}
+            </p>
           </CardContent>
         </Card>
         <Card className="rounded-xl bg-[#132C4A] border border-white/10 shadow-lg">
           <CardContent className="p-4">
-            <p className="text-[#C0C8D3] mb-1">New This Term</p>
-            <p className="text-[#1E90FF]">156</p>
+            <p className="text-[#C0C8D3] mb-1">Classes</p>
+            <p className="text-[#1E90FF] text-2xl font-bold">{classes.length}</p>
           </CardContent>
         </Card>
         <Card className="rounded-xl bg-[#132C4A] border border-white/10 shadow-lg">
           <CardContent className="p-4">
             <p className="text-[#C0C8D3] mb-1">Inactive</p>
-            <p className="text-[#DC3545]">47</p>
+            <p className="text-[#DC3545] text-2xl font-bold">
+              {students.filter(s => s.status === 'inactive').length}
+            </p>
           </CardContent>
         </Card>
       </div>
+
+      {/* View Student Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="bg-[#132C4A] text-white border-white/10">
+          <DialogHeader>
+            <DialogTitle>Student Details</DialogTitle>
+          </DialogHeader>
+          {selectedStudent && (
+            <div className="space-y-4">
+              <div>
+                <Label className="text-[#C0C8D3]">Full Name</Label>
+                <p className="text-white font-medium">{selectedStudent.full_name}</p>
+              </div>
+              <div>
+                <Label className="text-[#C0C8D3]">Registration Number</Label>
+                <p className="text-white">{selectedStudent.reg_no || 'N/A'}</p>
+              </div>
+              <div>
+                <Label className="text-[#C0C8D3]">Class</Label>
+                <p className="text-white">{selectedStudent.Class?.name || 'N/A'}</p>
+              </div>
+              <div>
+                <Label className="text-[#C0C8D3]">Gender</Label>
+                <p className="text-white">{selectedStudent.gender || 'N/A'}</p>
+              </div>
+              <div>
+                <Label className="text-[#C0C8D3]">Date of Birth</Label>
+                <p className="text-white">
+                  {selectedStudent.dob ? new Date(selectedStudent.dob).toLocaleDateString() : 'N/A'}
+                </p>
+              </div>
+              <div>
+                <Label className="text-[#C0C8D3]">Status</Label>
+                <Badge className={selectedStudent.status === 'active' ? "bg-[#28A745]" : "bg-[#DC3545]"}>
+                  {selectedStudent.status || 'active'}
+                </Badge>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
