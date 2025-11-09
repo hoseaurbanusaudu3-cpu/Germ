@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { 
   Plus, Search, Edit, Trash2, BookOpen, Users, Link as LinkIcon,
   Check, AlertCircle, MoreVertical, UserPlus
@@ -119,17 +119,6 @@ export function ManageSubjectsPage() {
     isCore: false,
   });
 
-  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, name: e.target.value }));
-  }, []);
-
-  const handleCodeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, code: e.target.value.toUpperCase() }));
-  }, []);
-
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  }, []);
 
   // Assignment state
   const [assignmentData, setAssignmentData] = useState({
@@ -326,9 +315,10 @@ export function ManageSubjectsPage() {
             <div className="space-y-2">
               <Label className="text-white">Subject Name *</Label>
               <Input
+                key="subject-name-input"
                 placeholder="e.g., Mathematics, English"
                 value={formData.name}
-                onChange={handleNameChange}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 className="h-12 rounded-xl border border-white/10 bg-[#0F243E] text-white"
               />
             </div>
@@ -336,9 +326,10 @@ export function ManageSubjectsPage() {
             <div className="space-y-2">
               <Label className="text-white">Subject Code *</Label>
               <Input
+                key="subject-code-input"
                 placeholder="e.g., MTH101"
                 value={formData.code}
-                onChange={handleCodeChange}
+                onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
                 className="h-12 rounded-xl border border-white/10 bg-[#0F243E] text-white"
               />
             </div>
@@ -490,9 +481,10 @@ export function ManageSubjectsPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#C0C8D3]" />
                 <Input
+                  key="subject-search-input"
                   placeholder="Search by name or code..."
                   value={searchQuery}
-                  onChange={handleSearchChange}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="h-12 pl-11 rounded-xl border border-white/10 bg-[#0F243E] text-white"
                 />
               </div>

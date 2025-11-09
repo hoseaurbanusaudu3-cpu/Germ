@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { 
   Plus, Search, Edit, Trash2, Users, BookOpen, 
   GraduationCap, Check, AlertCircle, MoreVertical
@@ -39,34 +39,6 @@ export function ManageClassesPage() {
     schoolLevel: "" as "Primary" | "Secondary" | "",
   });
 
-  // Optimized handlers to prevent re-renders on mobile
-  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, name: e.target.value }));
-  }, []);
-
-  const handleSectionChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, section: e.target.value }));
-  }, []);
-
-  const handleCapacityChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, capacity: e.target.value }));
-  }, []);
-
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  }, []);
-
-  const handleSchoolLevelChange = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, schoolLevel: value as "Primary" | "Secondary" }));
-  }, []);
-
-  const handleClassTeacherChange = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, classTeacherId: value }));
-  }, []);
-
-  const handleStatusChange = useCallback((value: string) => {
-    setFormData(prev => ({ ...prev, status: value as "Active" | "Inactive" }));
-  }, []);
 
   // Filter classes
   const filteredClasses = classes.filter(cls => {
@@ -197,7 +169,7 @@ export function ManageClassesPage() {
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-[#1F2937]">School Level *</Label>
-              <Select value={formData.schoolLevel} onValueChange={handleSchoolLevelChange}>
+              <Select value={formData.schoolLevel} onValueChange={(value) => setFormData(prev => ({ ...prev, schoolLevel: value as "Primary" | "Secondary" }))}>
                 <SelectTrigger className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]">
                   <SelectValue placeholder="Select school level" />
                 </SelectTrigger>
@@ -211,9 +183,10 @@ export function ManageClassesPage() {
             <div className="space-y-2">
               <Label className="text-[#1F2937]">Class Name *</Label>
               <Input
+                key="class-name-input"
                 placeholder="e.g., JSS 1A, SS 2B, Primary 3"
                 value={formData.name}
-                onChange={handleNameChange}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
               />
             </div>
@@ -223,9 +196,10 @@ export function ManageClassesPage() {
             <div className="space-y-2">
               <Label className="text-[#1F2937]">Section (Optional)</Label>
               <Input
+                key="section-input"
                 placeholder="e.g., A, B, C"
                 value={formData.section}
-                onChange={handleSectionChange}
+                onChange={(e) => setFormData(prev => ({ ...prev, section: e.target.value }))}
                 className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
               />
             </div>
@@ -233,10 +207,11 @@ export function ManageClassesPage() {
             <div className="space-y-2">
               <Label className="text-[#1F2937]">Class Capacity *</Label>
               <Input
+                key="capacity-input"
                 type="number"
                 placeholder="e.g., 35"
                 value={formData.capacity}
-                onChange={handleCapacityChange}
+                onChange={(e) => setFormData(prev => ({ ...prev, capacity: e.target.value }))}
                 className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
               />
             </div>
@@ -245,7 +220,7 @@ export function ManageClassesPage() {
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-[#1F2937]">Assign Class Teacher *</Label>
-              <Select value={formData.classTeacherId} onValueChange={handleClassTeacherChange}>
+              <Select value={formData.classTeacherId} onValueChange={(value) => setFormData(prev => ({ ...prev, classTeacherId: value }))}>
                 <SelectTrigger className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]">
                   <SelectValue placeholder="Select class teacher" />
                 </SelectTrigger>
@@ -271,7 +246,7 @@ export function ManageClassesPage() {
 
             <div className="space-y-2">
               <Label className="text-[#1F2937]">Status</Label>
-              <Select value={formData.status} onValueChange={handleStatusChange}>
+              <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as "Active" | "Inactive" }))}>
                 <SelectTrigger className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]">
                   <SelectValue />
                 </SelectTrigger>
@@ -385,9 +360,10 @@ export function ManageClassesPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6B7280]" />
                 <Input
+                  key="search-input"
                   placeholder="Search by class name or teacher..."
                   value={searchQuery}
-                  onChange={handleSearchChange}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="h-12 pl-11 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
                 />
               </div>
