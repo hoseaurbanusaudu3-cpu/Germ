@@ -6,9 +6,10 @@ import schoolLogo from "figma:asset/0f38946e273b623e7cb0b865c2f2fe194a9e92ea.png
 
 interface LandingPageProps {
   onNavigateToLogin: () => void;
+  onNavigateToTest?: () => void;
 }
 
-export function LandingPage({ onNavigateToLogin }: LandingPageProps) {
+export function LandingPage({ onNavigateToLogin, onNavigateToTest }: LandingPageProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -52,6 +53,15 @@ export function LandingPage({ onNavigateToLogin }: LandingPageProps) {
                 Contact
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#FFD700] transition-all group-hover:w-full" />
               </a>
+              {onNavigateToTest && (
+                <Button 
+                  onClick={onNavigateToTest}
+                  variant="outline"
+                  className="border-2 border-orange-500 text-orange-500 hover:bg-orange-50 rounded-xl px-4"
+                >
+                  🧪 Test Forms
+                </Button>
+              )}
               <Button 
                 onClick={onNavigateToLogin}
                 className="bg-[#FFD700] text-[#0A2540] hover:bg-[#FFD700]/90 rounded-xl px-6 shadow-lg hover:shadow-xl transition-all hover:scale-105"

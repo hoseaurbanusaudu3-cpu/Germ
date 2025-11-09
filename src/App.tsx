@@ -80,8 +80,12 @@ export default function App() {
     handlePageTransition("landing", "");
   };
 
-  const handleLogin = (role: string) => {
-    handlePageTransition("dashboard", role as Role);
+  const handleNavigateToTest = () => {
+    handlePageTransition("test-forms");
+  };
+
+  const handleLogin = (role: Role) => {
+    handlePageTransition("dashboard", role);
   };
 
   const handleLogout = () => {
@@ -101,7 +105,10 @@ export default function App() {
     <SchoolProvider>
       <div className={`transition-opacity duration-300 ${isTransitioning ? "opacity-0" : "opacity-100"}`}>
         {currentPage === "landing" && (
-          <LandingPage onNavigateToLogin={handleNavigateToLogin} />
+          <LandingPage 
+            onNavigateToLogin={handleNavigateToLogin}
+            onNavigateToTest={handleNavigateToTest}
+          />
         )}
 
         {currentPage === "login" && (
