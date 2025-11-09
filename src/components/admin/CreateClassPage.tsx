@@ -7,6 +7,7 @@ import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { toast } from "sonner";
 import { useSchool, Class } from "../../contexts/SchoolContext";
+import { classesAPI } from "../../services/api";
 
 interface CreateClassPageProps {
   onBack: () => void;
@@ -23,7 +24,7 @@ export function CreateClassPage({ onBack, onSuccess }: CreateClassPageProps) {
   const [schoolLevel, setSchoolLevel] = useState("");
   const [status, setStatus] = useState("Active");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!name || !capacity || !schoolLevel) {
@@ -31,30 +32,53 @@ export function CreateClassPage({ onBack, onSuccess }: CreateClassPageProps) {
       return;
     }
 
-    const newClass: Class = {
-      id: Date.now(),
-      name,
-      level: schoolLevel,
-      section: section || "",
-      capacity: parseInt(capacity),
-      currentStudents: 0,
-      classTeacher: "Unassigned",
-      classTeacherId: null,
-      status: status as "Active" | "Inactive",
-      academicYear: new Date().getFullYear().toString()
-    };
+    try {
+      const classData = {
+        name,
+        level: schoolLevel,
+        section: section || "",
+        capacity: parseInt(capacity),
+        classTeacherId: null,
+        status: status as "Active" | "Inactive",
+        academicYear: new Date().getFullYear().toString()
+      };
 
-    addClass(newClass);
-    toast.success("Class created successfully!");
-    
-    // Reset form
-    setName("");
-    setSection("");
-    setCapacity("");
-    setSchoolLevel("");
-    setStatus("Active");
-    
-    onSuccess();
+      // Save to database via API
+      const response = await classesAPI.create(classData);
+      
+      if (response.success) {
+        // Also update local state
+        const newClass: Class = {
+          id: response.data.id,
+          name: response.data.name,
+          level: response.data.level,
+          section: response.data.section || "",
+          capacity: response.data.capacity,
+          currentStudents: 0,
+          classTeacher: response.data.classTeacher || "Unassigned",
+          classTeacherId: response.data.classTeacherId,
+          status: response.data.status,
+          academicYear: response.data.academicYear
+        };
+        
+        addClass(newClass);
+        toast.success("Class created successfully!");
+        
+        // Reset form
+        setName("");
+        setSection("");
+        setCapacity("");
+        setSchoolLevel("");
+        setStatus("Active");
+        
+        onSuccess();
+      } else {
+        toast.error(response.message || "Failed to create class");
+      }
+    } catch (error: any) {
+      console.error("Error creating class:", error);
+      toast.error(error.response?.data?.message || "Failed to create class");
+    }
   };
 
   return (

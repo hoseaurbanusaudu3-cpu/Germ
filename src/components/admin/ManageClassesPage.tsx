@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { useSchool, Class } from "../../contexts/SchoolContext";
 
@@ -506,7 +506,7 @@ function ManageClassesPageComponent({ onNavigateToCreate }: ManageClassesPagePro
                         <TableCell className="text-[#1F2937]">
                           <div className="flex items-center gap-2">
                             <div className={`w-10 h-10 rounded-lg ${
-                              cls.schoolLevel === "Primary" 
+                              cls.level === "Primary" 
                                 ? "bg-gradient-to-br from-[#10B981] to-[#059669]"
                                 : "bg-gradient-to-br from-[#3B82F6] to-[#2563EB]"
                             } flex items-center justify-center`}>
@@ -515,11 +515,11 @@ function ManageClassesPageComponent({ onNavigateToCreate }: ManageClassesPagePro
                             <div>
                               <p className="text-[#1F2937] font-medium">{cls.name}</p>
                               <Badge className={`text-xs mt-1 ${
-                                cls.schoolLevel === "Primary"
+                                cls.level === "Primary"
                                   ? "bg-[#10B981] text-white"
                                   : "bg-[#3B82F6] text-white"
                               } border-0`}>
-                                {cls.schoolLevel}
+                                {cls.level}
                               </Badge>
                             </div>
                           </div>
