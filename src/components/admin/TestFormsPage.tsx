@@ -11,6 +11,11 @@ export function TestFormsPage() {
   const [isClassDialogOpen, setIsClassDialogOpen] = useState(false);
   const [isSubjectDialogOpen, setIsSubjectDialogOpen] = useState(false);
 
+  const handleBackToHome = () => {
+    localStorage.setItem('currentPage', 'landing');
+    window.location.reload();
+  };
+
   // Mock teachers data for testing
   const mockTeachers = [
     { id: 1, firstName: "John", lastName: "Doe" },
@@ -31,6 +36,17 @@ export function TestFormsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0A2540] via-[#1E3A5F] to-[#0A2540] p-6">
       <div className="max-w-4xl mx-auto space-y-6">
+        {/* Back Button */}
+        <div className="flex justify-start">
+          <Button
+            onClick={handleBackToHome}
+            variant="outline"
+            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+          >
+            ← Back to Home
+          </Button>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">
