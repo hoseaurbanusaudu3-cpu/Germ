@@ -98,17 +98,18 @@ export function LoginPage({ onLogin, onNavigateToLanding }: LoginPageProps) {
               </Select>
             </div>
 
-            {/* User ID / Email */}
+            {/* Email */}
             <div className="space-y-2">
-              <Label htmlFor="userId" className="text-[#0A2540]">User ID / Email</Label>
+              <Label htmlFor="userId" className="text-[#0A2540]">Email Address</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   id="userId"
-                  type="text"
-                  placeholder="Enter your ID or email"
+                  type="email"
+                  placeholder="admin@gra.edu.ng"
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
+                  autoComplete="email"
                   className="h-12 pl-11 rounded-xl border-2 border-gray-200 focus:border-[#FFD700] transition-colors"
                 />
               </div>

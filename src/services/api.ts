@@ -79,12 +79,16 @@ export const authAPI = {
     const response = await apiClient.post('/auth/login', credentials);
     console.log('Login response:', response.data);
     
-    if (response.data.token) {
+    // Backend returns 'accessToken' in data object
+    const token = response.data.data?.accessToken || response.data.accessToken;
+    const user = response.data.data?.user || response.data.user;
+    
+    if (token) {
       console.log('Storing token and user in localStorage');
-      localStorage.setItem('authToken', response.data.token);
-      localStorage.setItem('currentUser', JSON.stringify(response.data.user));
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('currentUser', JSON.stringify(user));
     } else {
-      console.error('No token in response!');
+      console.error('No token in response!', response.data);
     }
     return response.data;
   },
