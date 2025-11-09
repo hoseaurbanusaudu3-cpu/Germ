@@ -148,19 +148,18 @@ function ManageSubjectsPageComponent() {
   };
 
   const handleCreateSubject = async () => {
-    if (!formData.name || !formData.code || !formData.department || !formData.level) {
-      toast.error("Please fill all required fields including school level");
+    if (!formData.name || !formData.code) {
+      toast.error("Please fill all required fields");
       return;
     }
 
     try {
+      // Backend only accepts: name, code, is_core, status
       const subjectData = {
         name: formData.name,
         code: formData.code,
-        department: formData.department,
-        level: formData.level,
-        status: formData.status === 'Active' ? 'active' : 'inactive',
-        is_core: formData.isCore
+        is_core: formData.isCore,
+        status: formData.status === 'Active' ? 'active' : 'inactive'
       };
 
       const response = await subjectsAPI.create(subjectData);
@@ -177,19 +176,18 @@ function ManageSubjectsPageComponent() {
   };
 
   const handleEditSubject = async () => {
-    if (!selectedSubject || !formData.name || !formData.code || !formData.department || !formData.level) {
-      toast.error("Please fill all required fields including school level");
+    if (!selectedSubject || !formData.name || !formData.code) {
+      toast.error("Please fill all required fields");
       return;
     }
 
     try {
+      // Backend only accepts: name, code, is_core, status
       const subjectData = {
         name: formData.name,
         code: formData.code,
-        department: formData.department,
-        level: formData.level,
-        status: formData.status === 'Active' ? 'active' : 'inactive',
-        is_core: formData.isCore
+        is_core: formData.isCore,
+        status: formData.status === 'Active' ? 'active' : 'inactive'
       };
 
       const response = await subjectsAPI.update(selectedSubject.id, subjectData);

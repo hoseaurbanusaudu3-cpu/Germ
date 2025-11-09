@@ -39,6 +39,7 @@ const ManageClassesPage = () => {
   useEffect(() => {
     fetchClasses();
     fetchTeachers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleInputChange = (
