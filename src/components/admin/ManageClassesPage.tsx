@@ -28,7 +28,9 @@ function ManageClassesPageComponent({ onNavigateToCreate }: ManageClassesPagePro
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isAssignTeacherDialogOpen, setIsAssignTeacherDialogOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState<Class | null>(null);
+  const [selectedTeacherId, setSelectedTeacherId] = useState("");
 
   // Get active teachers from context
   const availableTeachers = teachers.filter(t => t.status === 'Active');
@@ -144,6 +146,36 @@ function ManageClassesPageComponent({ onNavigateToCreate }: ManageClassesPagePro
   const openDeleteDialog = (cls: Class) => {
     setSelectedClass(cls);
     setDeleteDialogOpen(true);
+  };
+
+  const openAssignTeacherDialog = (cls: Class) => {
+    setSelectedClass(cls);
+    setSelectedTeacherId(cls.classTeacherId?.toString() || "");
+    setIsAssignTeacherDialogOpen(true);
+  };
+
+  const handleAssignTeacher = () => {
+    if (!selectedClass || !selectedTeacherId) {
+      toast.error("Please select a teacher");
+      return;
+    }
+
+    const teacher = availableTeachers.find(t => t.id.toString() === selectedTeacherId);
+    if (!teacher) {
+      toast.error("Selected teacher not found");
+      return;
+    }
+
+    const updatedClass: Partial<Class> = {
+      classTeacher: `${teacher.firstName} ${teacher.lastName}`,
+      classTeacherId: teacher.id,
+    };
+
+    updateClass(selectedClass.id, updatedClass);
+    toast.success(`${teacher.firstName} ${teacher.lastName} assigned to ${selectedClass.name}!`);
+    setIsAssignTeacherDialogOpen(false);
+    setSelectedClass(null);
+    setSelectedTeacherId("");
   };
 
   const resetForm = () => {
@@ -535,6 +567,13 @@ function ManageClassesPageComponent({ onNavigateToCreate }: ManageClassesPagePro
                                 Edit
                               </DropdownMenuItem>
                               <DropdownMenuItem 
+                                onClick={() => openAssignTeacherDialog(cls)}
+                                className="text-[#3B82F6] cursor-pointer"
+                              >
+                                <Users className="w-4 h-4 mr-2" />
+                                Assign Teacher
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
                                 onClick={() => openDeleteDialog(cls)}
                                 className="text-[#EF4444] cursor-pointer"
                               >
@@ -602,6 +641,69 @@ function ManageClassesPageComponent({ onNavigateToCreate }: ManageClassesPagePro
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Assign Teacher Dialog */}
+      <Dialog open={isAssignTeacherDialogOpen} onOpenChange={setIsAssignTeacherDialogOpen}>
+        <DialogContent className="max-w-md rounded-xl bg-white border border-[#E5E7EB]">
+          <DialogHeader>
+            <DialogTitle className="text-[#1F2937]">Assign Class Teacher</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <p className="text-sm text-blue-900">
+                <strong>Class:</strong> {selectedClass?.name}
+              </p>
+              <p className="text-sm text-blue-800 mt-1">
+                <strong>Current Teacher:</strong> {selectedClass?.classTeacher || "Unassigned"}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-[#1F2937] font-medium">Select Teacher *</Label>
+              <Select value={selectedTeacherId} onValueChange={setSelectedTeacherId}>
+                <SelectTrigger className="h-12 rounded-lg border-[#E5E7EB]">
+                  <SelectValue placeholder="Select a teacher" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-[#E5E7EB]">
+                  {availableTeachers.length === 0 ? (
+                    <div className="p-3 text-center text-[#6B7280] text-sm">
+                      No teachers available. Please add teachers first.
+                    </div>
+                  ) : (
+                    availableTeachers.map((teacher) => (
+                      <SelectItem key={teacher.id} value={teacher.id.toString()} className="text-[#1F2937]">
+                        {teacher.firstName} {teacher.lastName}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsAssignTeacherDialogOpen(false);
+                setSelectedClass(null);
+                setSelectedTeacherId("");
+              }}
+              className="rounded-lg"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleAssignTeacher}
+              className="bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-lg"
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Assign Teacher
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
