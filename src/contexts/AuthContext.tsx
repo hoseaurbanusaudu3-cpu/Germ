@@ -54,13 +54,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (username: string, password: string) => {
     try {
       const response = await authAPI.login({ email: username, password });
-      setUser(response.user);
+      
+      // Backend returns: { success, message, data: { user, accessToken, refreshToken } }
+      const userData = response.data?.user || response.user;
+      const token = response.data?.accessToken || response.accessToken;
+      
+      if (userData) {
+        setUser(userData);
+      }
       
       // Connect socket after successful login
-      socketService.connect(response.token);
+      if (token) {
+        socketService.connect(token);
+      }
       
       toast.success('Login successful!');
     } catch (error: any) {
+      console.error('Login error:', error);
       toast.error(error.response?.data?.message || 'Login failed');
       throw error;
     }
