@@ -17,14 +17,6 @@ export function LoginPage({ onLogin, onNavigateToLanding }: LoginPageProps) {
   const [userId, setUserId] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [showCredentials, setShowCredentials] = useState(false);
-
-  const credentials = {
-    admin: { id: "admin@graceland.edu.ng", password: "admin2024" },
-    teacher: { id: "teacher@graceland.edu.ng", password: "teacher2024" },
-    accountant: { id: "accountant@graceland.edu.ng", password: "account2024" },
-    parent: { id: "parent@graceland.edu.ng", password: "parent2024" },
-  };
 
   const handleLogin = () => {
     if (role && userId && password) {
@@ -35,13 +27,6 @@ export function LoginPage({ onLogin, onNavigateToLanding }: LoginPageProps) {
         onLogin(role);
       }, 1000);
     }
-  };
-
-  const handleQuickLogin = (selectedRole: string) => {
-    const cred = credentials[selectedRole as keyof typeof credentials];
-    setRole(selectedRole);
-    setUserId(cred.id);
-    setPassword(cred.password);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -146,40 +131,6 @@ export function LoginPage({ onLogin, onNavigateToLanding }: LoginPageProps) {
                 ← Back to Home
               </button>
             </div>
-
-            {/* Test Credentials Toggle */}
-            <div className="pt-4 border-t border-gray-200">
-              <button
-                onClick={() => setShowCredentials(!showCredentials)}
-                className="w-full text-sm text-gray-600 hover:text-[#0A2540] transition-colors"
-              >
-                {showCredentials ? "Hide" : "Show"} Test Credentials
-              </button>
-            </div>
-
-            {/* Credentials Display */}
-            {showCredentials && (
-              <div className="space-y-3 pt-4 animate-in fade-in slide-in-from-top-2">
-                <p className="text-xs text-gray-500 text-center mb-3">Click to auto-fill credentials</p>
-                
-                {Object.entries(credentials).map(([roleKey, cred]) => (
-                  <button
-                    key={roleKey}
-                    onClick={() => handleQuickLogin(roleKey)}
-                    className="w-full p-3 bg-gray-50 hover:bg-[#FFD700]/10 border-2 border-gray-200 hover:border-[#FFD700] rounded-xl text-left transition-all group"
-                  >
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-sm text-[#0A2540] capitalize group-hover:text-[#0A2540]">
-                        {roleKey}
-                      </p>
-                      <span className="text-xs text-gray-500 group-hover:text-[#0A2540]">Click to use</span>
-                    </div>
-                    <p className="text-xs text-gray-600">Email: {cred.id}</p>
-                    <p className="text-xs text-gray-600">Password: {cred.password}</p>
-                  </button>
-                ))}
-              </div>
-            )}
           </CardContent>
         </Card>
 
