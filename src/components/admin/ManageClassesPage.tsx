@@ -32,7 +32,7 @@ const ManageClassesPage = () => {
     section: "",
     classTeacherId: undefined as number | undefined,
     capacity: 0,
-    status: "Active",
+    status: "active" as "active" | "inactive",
   });
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -58,8 +58,8 @@ const ManageClassesPage = () => {
     setFormData({
       name: classItem.name,
       level: classItem.level,
-      section: classItem.section,
-      classTeacherId: classItem.classTeacherId || undefined,
+      section: classItem.section || "",
+      classTeacherId: classItem.class_teacher_id || undefined,
       capacity: classItem.capacity,
       status: classItem.status,
     });
@@ -75,7 +75,7 @@ const ManageClassesPage = () => {
       section: "",
       classTeacherId: undefined,
       capacity: 0,
-      status: "Active",
+      status: "active",
     });
     setIsFormOpen(true);
   };
@@ -89,16 +89,13 @@ const ManageClassesPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Backend expects snake_case and specific fields
       const classData = {
-        name: formData.name,
+        name: `${formData.level} ${formData.section}`.trim() || formData.name,
         level: formData.level,
-        section: formData.section,
+        class_teacher_id: formData.classTeacherId ? Number(formData.classTeacherId) : null,
         capacity: Number(formData.capacity),
-        currentStudents: 0,
-        classTeacherId: formData.classTeacherId ? Number(formData.classTeacherId) : null,
-        classTeacher: formData.classTeacherId ? teachers.find(t => t.id === Number(formData.classTeacherId))?.firstName + ' ' + teachers.find(t => t.id === Number(formData.classTeacherId))?.lastName || '' : '',
-        academicYear: '2024/2025',
-        status: formData.status as 'Active' | 'Inactive',
+        status: formData.status, // already 'active' or 'inactive'
       };
 
       if (isEditing && currentClass) {
@@ -109,9 +106,10 @@ const ManageClassesPage = () => {
         toast.success("Class added successfully");
       }
       setIsFormOpen(false);
-    } catch (error) {
-      toast.error("Failed to save class");
-      console.error(error);
+    } catch (error: any) {
+      const errorMsg = error?.response?.data?.message || error?.message || "Failed to save class";
+      toast.error(errorMsg);
+      console.error('Error saving class:', error);
     }
   };
 
@@ -153,7 +151,7 @@ const ManageClassesPage = () => {
                       <CardTitle className="text-lg">{classItem.name}</CardTitle>
                       <CardDescription>{classItem.level} - Section {classItem.section}</CardDescription>
                     </div>
-                    <Badge variant={classItem.status === "Active" ? "default" : "destructive"}>
+                    <Badge variant={classItem.status === "active" ? "default" : "destructive"}>
                       {classItem.status}
                     </Badge>
                   </div>
@@ -276,8 +274,8 @@ const ManageClassesPage = () => {
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Active">Active</SelectItem>
-                        <SelectItem value="Inactive">Inactive</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

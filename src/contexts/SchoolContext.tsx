@@ -47,13 +47,15 @@ export interface Class {
   id: number;
   name: string;
   level: string;
-  section: string;
+  class_teacher_id?: number | null;
   capacity: number;
-  currentStudents: number;
-  classTeacherId: number | null;
-  classTeacher: string;
-  academicYear: string;
-  status: 'Active' | 'Inactive';
+  status: 'active' | 'inactive';
+  // Optional frontend-only fields
+  section?: string;
+  currentStudents?: number;
+  classTeacherId?: number | null;
+  classTeacher?: string;
+  academicYear?: string;
 }
 
 export interface Subject {
