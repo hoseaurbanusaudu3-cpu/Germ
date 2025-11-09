@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { 
   Plus, Search, Edit, Trash2, Users, BookOpen, 
   GraduationCap, Check, AlertCircle, MoreVertical
@@ -38,6 +38,23 @@ export function ManageClassesPage() {
     status: "Active" as "Active" | "Inactive",
     schoolLevel: "" as "Primary" | "Secondary" | "",
   });
+
+  // Optimized handlers to prevent re-renders on mobile
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, name: e.target.value }));
+  }, []);
+
+  const handleSectionChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, section: e.target.value }));
+  }, []);
+
+  const handleCapacityChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, capacity: e.target.value }));
+  }, []);
+
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  }, []);
 
   // Filter classes
   const filteredClasses = classes.filter(cls => {
@@ -189,7 +206,7 @@ export function ManageClassesPage() {
               <Input
                 placeholder="e.g., JSS 1A, SS 2B, Primary 3"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={handleNameChange}
                 className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
               />
             </div>
@@ -201,7 +218,7 @@ export function ManageClassesPage() {
               <Input
                 placeholder="e.g., A, B, C"
                 value={formData.section}
-                onChange={(e) => setFormData({ ...formData, section: e.target.value })}
+                onChange={handleSectionChange}
                 className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
               />
             </div>
@@ -212,7 +229,7 @@ export function ManageClassesPage() {
                 type="number"
                 placeholder="e.g., 35"
                 value={formData.capacity}
-                onChange={(e) => setFormData({ ...formData, capacity: e.target.value })}
+                onChange={handleCapacityChange}
                 className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
               />
             </div>
@@ -363,7 +380,7 @@ export function ManageClassesPage() {
                 <Input
                   placeholder="Search by class name or teacher..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={handleSearchChange}
                   className="h-12 pl-11 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
                 />
               </div>
