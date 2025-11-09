@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { useSchool, Class, Teacher } from "../../contexts/SchoolContext";
 
 const ManageClassesPage = () => {
-  const { classes, teachers, addClass, updateClass, fetchClasses, fetchTeachers } = useSchool();
+  const { classes, teachers, addClass, updateClass } = useSchool();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentClass, setCurrentClass] = useState<Class | null>(null);
@@ -35,11 +35,6 @@ const ManageClassesPage = () => {
     status: "Active",
   });
   const [searchQuery, setSearchQuery] = useState("");
-
-  useEffect(() => {
-    fetchClasses();
-    fetchTeachers();
-  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -96,14 +91,13 @@ const ManageClassesPage = () => {
       };
 
       if (isEditing && currentClass) {
-        await updateClass(currentClass.id, classData);
+        updateClass(currentClass.id, classData);
         toast.success("Class updated successfully");
       } else {
-        await addClass(classData);
+        addClass(classData);
         toast.success("Class added successfully");
       }
       setIsFormOpen(false);
-      fetchClasses();
     } catch (error) {
       toast.error("Failed to save class");
       console.error(error);
