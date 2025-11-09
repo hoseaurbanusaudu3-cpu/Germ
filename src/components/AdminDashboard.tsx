@@ -2,7 +2,7 @@ import { useState } from "react";
 import { 
   LayoutDashboard, Users, UserPlus, GraduationCap,
   CheckCircle, Bell, Settings, FileText,
-  Link as LinkIcon, BookOpen, List, Award, BarChart3, MessageSquare, Database, DollarSign, Activity
+  Link as LinkIcon, BookOpen, List, Award, BarChart3, MessageSquare, Database, DollarSign, Activity, Plus
 } from "lucide-react";
 // Updated: removed workflow demo
 import { DashboardSidebar } from "./DashboardSidebar";
@@ -19,10 +19,9 @@ import { NotificationSystemPage } from "./admin/NotificationSystemPage";
 import { ApproveResultsPage } from "./admin/ApproveResultsPage";
 import { SystemSettingsPage } from "./admin/SystemSettingsPage";
 import { LinkStudentParentPage } from "./admin/LinkStudentParentPage";
-// Temporarily use working test versions
 import { ManageClassesPage } from "./admin/ManageClassesPage";
 import { ManageSubjectsPage } from "./admin/ManageSubjectsPage";
-// TODO: These are having typing issues, may need to replace with uncontrolled versions
+import { CreateClassPage } from "./admin/CreateClassPage";
 import { ManageTeacherAssignmentsPage } from "./admin/ManageTeacherAssignmentsPage";
 import { PromotionSystemPage } from "./admin/PromotionSystemPage";
 import { ViewAllResultsPage } from "./admin/ViewAllResultsPage";
@@ -62,6 +61,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     
     // Academic Management
     { icon: <BookOpen className="w-5 h-5" />, label: "Manage Classes", id: "manage-classes" },
+    { icon: <Plus className="w-5 h-5" />, label: "Create Class", id: "create-class" },
     { icon: <List className="w-5 h-5" />, label: "Manage Subjects", id: "manage-subjects" },
     { icon: <Award className="w-5 h-5" />, label: "Teacher Assignments", id: "teacher-assignments" },
     { icon: <BarChart3 className="w-5 h-5" />, label: "Promotion System", id: "promotion-system" },
@@ -270,6 +270,12 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           {activeItem === "manage-teachers" && <ManageTeachersPage />}
           {activeItem === "manage-parents" && <ManageParentsPage onNavigateToLink={() => setActiveItem("link-student-parent")} />}
           {activeItem === "manage-classes" && <ManageClassesPage />}
+          {activeItem === "create-class" && (
+            <CreateClassPage 
+              onBack={() => setActiveItem("manage-classes")}
+              onSuccess={() => setActiveItem("manage-classes")}
+            />
+          )}
           {activeItem === "manage-subjects" && <ManageSubjectsPage />}
           {activeItem === "teacher-assignments" && <ManageTeacherAssignmentsPage />}
           {activeItem === "promotion-system" && <PromotionSystemPage />}
