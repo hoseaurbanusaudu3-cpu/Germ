@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { classesAPI, subjectsAPI } from '../services/api';
+import { classesAPI, subjectsAPI, studentsAPI, sessionsAPI, termsAPI } from '../services/api';
 
 // ==================== INTERFACES ====================
 
@@ -314,10 +314,11 @@ interface SchoolContextType {
   bankAccountSettings: BankAccountSettings | null;
 
   // Student Methods
-  addStudent: (student: Omit<Student, 'id'>) => number;
-  updateStudent: (id: number, student: Partial<Student>) => void;
+  addStudent: (student: Omit<Student, 'id'>) => Promise<number>;
+  updateStudent: (id: number, student: Partial<Student>) => Promise<void>;
   deleteStudent: (id: number) => void;
   getStudentsByClass: (classId: number) => Student[];
+  fetchStudents: () => Promise<void>;
 
   // Teacher Methods
   addTeacher: (teacher: Omit<Teacher, 'id'>) => number;
@@ -344,9 +345,10 @@ interface SchoolContextType {
   fetchClasses: () => Promise<void>;
 
   // Subject Methods
-  addSubject: (subject: Omit<Subject, 'id'>) => void;
-  updateSubject: (id: number, subject: Partial<Subject>) => void;
+  addSubject: (subject: Omit<Subject, 'id'>) => Promise<void>;
+  updateSubject: (id: number, subject: Partial<Subject>) => Promise<void>;
   deleteSubject: (id: number) => void;
+  fetchSubjects: () => Promise<void>;
 
   // Subject Assignment Methods
   addSubjectAssignment: (assignment: Omit<SubjectAssignment, 'id'>) => void;
@@ -509,20 +511,43 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
 
   // ==================== IMPLEMENTATION ====================
 
-  // Student Methods
-  const addStudent = (student: Omit<Student, 'id'>) => {
-    const newId = students.length > 0 ? Math.max(...students.map(s => s.id)) + 1 : 1;
-    const newStudent = { ...student, id: newId };
-    setStudents([...students, newStudent]);
-    
-    // Update class student count
-    updateClassStudentCount(student.classId);
-    
-    return newId;
+  // Fetch Students from API
+  const fetchStudents = async () => {
+    try {
+      const response = await studentsAPI.getAll();
+      if (response.success && response.data) {
+        setStudents(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching students:', error);
+    }
   };
 
-  const updateStudent = (id: number, student: Partial<Student>) => {
-    setStudents(students.map(s => (s.id === id ? { ...s, ...student } : s)));
+  // Student Methods
+  const addStudent = async (student: Omit<Student, 'id'>) => {
+    try {
+      const response = await studentsAPI.create(student);
+      if (response.success) {
+        await fetchStudents(); // Refresh the list
+        return response.data.id;
+      }
+      return 0;
+    } catch (error) {
+      console.error('Error adding student:', error);
+      throw error;
+    }
+  };
+
+  const updateStudent = async (id: number, student: Partial<Student>) => {
+    try {
+      const response = await studentsAPI.update(id, student);
+      if (response.success) {
+        await fetchStudents(); // Refresh the list
+      }
+    } catch (error) {
+      console.error('Error updating student:', error);
+      throw error;
+    }
   };
 
   const deleteStudent = (id: number) => {
@@ -690,14 +715,41 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
     ));
   };
 
-  // Subject Methods
-  const addSubject = (subject: Omit<Subject, 'id'>) => {
-    const newSubject = { ...subject, id: subjects.length + 1 };
-    setSubjects([...subjects, newSubject]);
+  // Fetch Subjects from API
+  const fetchSubjects = async () => {
+    try {
+      const response = await subjectsAPI.getAll();
+      if (response.success && response.data) {
+        setSubjects(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching subjects:', error);
+    }
   };
 
-  const updateSubject = (id: number, subject: Partial<Subject>) => {
-    setSubjects(subjects.map(s => (s.id === id ? { ...s, ...subject } : s)));
+  // Subject Methods
+  const addSubject = async (subject: Omit<Subject, 'id'>) => {
+    try {
+      const response = await subjectsAPI.create(subject);
+      if (response.success) {
+        await fetchSubjects(); // Refresh the list
+      }
+    } catch (error) {
+      console.error('Error adding subject:', error);
+      throw error;
+    }
+  };
+
+  const updateSubject = async (id: number, subject: Partial<Subject>) => {
+    try {
+      const response = await subjectsAPI.update(id, subject);
+      if (response.success) {
+        await fetchSubjects(); // Refresh the list
+      }
+    } catch (error) {
+      console.error('Error updating subject:', error);
+      throw error;
+    }
   };
 
   const deleteSubject = (id: number) => {
@@ -1260,6 +1312,7 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
     updateStudent,
     deleteStudent,
     getStudentsByClass,
+    fetchStudents,
     addTeacher,
     updateTeacher,
     deleteTeacher,
@@ -1279,6 +1332,7 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
     addSubject,
     updateSubject,
     deleteSubject,
+    fetchSubjects,
     addSubjectAssignment,
     updateSubjectAssignment,
     deleteSubjectAssignment,
