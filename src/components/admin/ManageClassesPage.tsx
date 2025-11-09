@@ -56,6 +56,18 @@ export function ManageClassesPage() {
     setSearchQuery(e.target.value);
   }, []);
 
+  const handleSchoolLevelChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, schoolLevel: value as "Primary" | "Secondary" }));
+  }, []);
+
+  const handleClassTeacherChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, classTeacherId: value }));
+  }, []);
+
+  const handleStatusChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, status: value as "Active" | "Inactive" }));
+  }, []);
+
   // Filter classes
   const filteredClasses = classes.filter(cls => {
     const matchesSearch = cls.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -185,12 +197,7 @@ export function ManageClassesPage() {
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-[#1F2937]">School Level *</Label>
-              <Select 
-                value={formData.schoolLevel} 
-                onValueChange={(value: "Primary" | "Secondary") => {
-                  setFormData({ ...formData, schoolLevel: value });
-                }}
-              >
+              <Select value={formData.schoolLevel} onValueChange={handleSchoolLevelChange}>
                 <SelectTrigger className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]">
                   <SelectValue placeholder="Select school level" />
                 </SelectTrigger>
@@ -238,7 +245,7 @@ export function ManageClassesPage() {
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="text-[#1F2937]">Assign Class Teacher *</Label>
-              <Select value={formData.classTeacherId} onValueChange={(value) => setFormData({ ...formData, classTeacherId: value })}>
+              <Select value={formData.classTeacherId} onValueChange={handleClassTeacherChange}>
                 <SelectTrigger className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]">
                   <SelectValue placeholder="Select class teacher" />
                 </SelectTrigger>
@@ -264,7 +271,7 @@ export function ManageClassesPage() {
 
             <div className="space-y-2">
               <Label className="text-[#1F2937]">Status</Label>
-              <Select value={formData.status} onValueChange={(value: "Active" | "Inactive") => setFormData({ ...formData, status: value })}>
+              <Select value={formData.status} onValueChange={handleStatusChange}>
                 <SelectTrigger className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]">
                   <SelectValue />
                 </SelectTrigger>
