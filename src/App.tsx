@@ -35,16 +35,27 @@ export default function App() {
     localStorage.setItem('userRole', userRole);
   }, [userRole]);
 
-  // Check if user is authenticated on mount
+  // Check if user is authenticated on mount and restore session
   useEffect(() => {
     const authToken = localStorage.getItem('authToken');
     const currentUser = localStorage.getItem('currentUser');
+    const savedPage = localStorage.getItem('currentPage');
+    const savedRole = localStorage.getItem('userRole');
     
-    // If no auth token but trying to access dashboard, redirect to login
-    if (!authToken || !currentUser) {
+    // If user has valid auth token, restore their session
+    if (authToken && currentUser) {
+      // User is authenticated, restore their page and role
+      if (savedPage && savedRole) {
+        setCurrentPage(savedPage as Page);
+        setUserRole(savedRole as Role);
+      }
+    } else {
+      // No auth token - redirect to login if on protected pages
       if (currentPage === 'dashboard' || currentPage === 'report-card') {
         setCurrentPage('login');
         setUserRole('');
+        localStorage.removeItem('currentPage');
+        localStorage.removeItem('userRole');
       }
     }
   }, []);

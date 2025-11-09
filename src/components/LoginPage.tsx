@@ -24,6 +24,13 @@ export function LoginPage({ onLogin, onNavigateToLanding }: LoginPageProps) {
       // Simulate API call
       setTimeout(() => {
         setIsLoading(false);
+        // Store auth token and user info for session persistence
+        localStorage.setItem('authToken', 'demo-token-' + Date.now());
+        localStorage.setItem('currentUser', JSON.stringify({
+          email: userId,
+          role: role,
+          name: 'User'
+        }));
         onLogin(role);
       }, 1000);
     }
