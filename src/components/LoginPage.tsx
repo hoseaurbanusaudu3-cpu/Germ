@@ -6,6 +6,8 @@ import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Card, CardContent, CardHeader } from "./ui/card";
 import schoolLogo from "figma:asset/0f38946e273b623e7cb0b865c2f2fe194a9e92ea.png";
+import { authAPI } from "../services/api";
+import { toast } from "sonner";
 
 interface LoginPageProps {
   onLogin: (role: string) => void;
@@ -18,21 +20,30 @@ export function LoginPage({ onLogin, onNavigateToLanding }: LoginPageProps) {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (role && userId && password) {
       setIsLoading(true);
-      // Simulate API call
-      setTimeout(() => {
+      
+      try {
+        // Call real backend API
+        const response = await authAPI.login({
+          username: userId,
+          password: password,
+          role: role
+        });
+        
+        if (response.success) {
+          toast.success("Login successful!");
+          onLogin(role);
+        } else {
+          toast.error(response.message || "Login failed");
+          setIsLoading(false);
+        }
+      } catch (error: any) {
+        console.error("Login error:", error);
+        toast.error(error.response?.data?.message || "Login failed. Please check your credentials.");
         setIsLoading(false);
-        // Store auth token and user info for session persistence
-        localStorage.setItem('authToken', 'demo-token-' + Date.now());
-        localStorage.setItem('currentUser', JSON.stringify({
-          email: userId,
-          role: role,
-          name: 'User'
-        }));
-        onLogin(role);
-      }, 1000);
+      }
     }
   };
 
