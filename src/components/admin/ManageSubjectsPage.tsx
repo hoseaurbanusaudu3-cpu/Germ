@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { 
   Plus, Search, Edit, Trash2, BookOpen, Users, Link as LinkIcon,
-  X, Check, AlertCircle, MoreVertical, UserPlus, Loader2
+  Check, AlertCircle, MoreVertical, UserPlus
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Button } from "../ui/button";
@@ -50,7 +50,7 @@ export function ManageSubjectsPage() {
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Load subjects from API
   const [subjects, setSubjects] = useState<Subject[]>([]);  
@@ -85,120 +85,6 @@ export function ManageSubjectsPage() {
       setLoading(false);
     }
   };
-
-  // Remove all fake data
-  const [fakeSubjects] = useState<Subject[]>([
-    { 
-      id: 1, 
-      name: "Mathematics", 
-      code: "MTH101", 
-      department: "Sciences",
-      level: "Secondary",
-      assignedClasses: ["JSS 1A", "JSS 1B", "JSS 2A"], 
-      assignedTeachers: [{ name: "Mr. John Doe", classes: ["JSS 1A", "JSS 1B"] }],
-      status: "Active",
-      isCore: true
-    },
-    { 
-      id: 2, 
-      name: "English Language", 
-      code: "ENG101", 
-      department: "Languages",
-      level: "Secondary",
-      assignedClasses: ["JSS 1A", "JSS 2A", "SS 1A"], 
-      assignedTeachers: [{ name: "Mrs. Sarah Ahmad", classes: ["JSS 1A", "JSS 2A", "SS 1A"] }],
-      status: "Active",
-      isCore: true
-    },
-    { 
-      id: 3, 
-      name: "Physics", 
-      code: "PHY101", 
-      department: "Sciences",
-      level: "Secondary",
-      assignedClasses: ["SS 1A", "SS 2A"], 
-      assignedTeachers: [{ name: "Mr. Ibrahim Hassan", classes: ["SS 1A", "SS 2A"] }],
-      status: "Active",
-      isCore: true
-    },
-    { 
-      id: 4, 
-      name: "Chemistry", 
-      code: "CHE101", 
-      department: "Sciences",
-      level: "Secondary",
-      assignedClasses: ["SS 1A", "SS 2A"], 
-      assignedTeachers: [{ name: "Ms. Aisha Mohammed", classes: ["SS 1A", "SS 2A"] }],
-      status: "Active",
-      isCore: true
-    },
-    { 
-      id: 5, 
-      name: "Biology", 
-      code: "BIO101", 
-      department: "Sciences",
-      level: "Secondary",
-      assignedClasses: ["JSS 2A", "SS 1A"], 
-      assignedTeachers: [{ name: "Mr. Usman Garba", classes: ["JSS 2A", "SS 1A"] }],
-      status: "Active",
-      isCore: true
-    },
-    { 
-      id: 6, 
-      name: "Economics", 
-      code: "ECO101", 
-      department: "Social Sciences",
-      level: "Secondary",
-      assignedClasses: ["SS 2A"], 
-      assignedTeachers: [{ name: "Mrs. Fatima Bello", classes: ["SS 2A"] }],
-      status: "Active",
-      isCore: false
-    },
-    { 
-      id: 7, 
-      name: "Government", 
-      code: "GOV101", 
-      department: "Social Sciences",
-      level: "Secondary",
-      assignedClasses: ["SS 1A", "SS 2A"], 
-      assignedTeachers: [{ name: "Mr. Musa Aliyu", classes: ["SS 1A", "SS 2A"] }],
-      status: "Active",
-      isCore: false
-    },
-    { 
-      id: 8, 
-      name: "Computer Science", 
-      code: "COM101", 
-      department: "Sciences",
-      level: "Secondary",
-      assignedClasses: ["JSS 3A", "SS 1A"], 
-      assignedTeachers: [{ name: "Mr. David Okon", classes: ["JSS 3A", "SS 1A"] }],
-      status: "Active",
-      isCore: false
-    },
-    { 
-      id: 9, 
-      name: "Basic Science", 
-      code: "BSC101", 
-      department: "Sciences",
-      level: "Primary",
-      assignedClasses: ["Primary 4", "Primary 5", "Primary 6"], 
-      assignedTeachers: [{ name: "Ms. Grace Peter", classes: ["Primary 4", "Primary 5"] }],
-      status: "Active",
-      isCore: true
-    },
-    { 
-      id: 10, 
-      name: "Numeracy", 
-      code: "NUM101", 
-      department: "Mathematics",
-      level: "Primary",
-      assignedClasses: ["Primary 1", "Primary 2", "Primary 3"], 
-      assignedTeachers: [{ name: "Mrs. Blessing Ojo", classes: ["Primary 1", "Primary 2"] }],
-      status: "Active",
-      isCore: true
-    },
-  ]);
 
   const availableTeachers: Teacher[] = [
     { id: 1, name: "Mr. John Doe", subjects: ["Mathematics", "Further Mathematics"] },
@@ -474,7 +360,7 @@ export function ManageSubjectsPage() {
 
             <div className="space-y-2">
               <Label className="text-white">Department *</Label>
-              <Select value={formData.department} onValueChange={(value) => setFormData({ ...formData, department: value })}>
+              <Select value={formData.department} onValueChange={(value: string) => setFormData({ ...formData, department: value })}>
                 <SelectTrigger className="h-12 rounded-xl border border-white/10 bg-[#0F243E] text-white">
                   <SelectValue placeholder="Select department" />
                 </SelectTrigger>
@@ -508,7 +394,7 @@ export function ManageSubjectsPage() {
               <Checkbox
                 id="isCore"
                 checked={formData.isCore}
-                onCheckedChange={(checked) => setFormData({ ...formData, isCore: checked as boolean })}
+                onCheckedChange={(checked: boolean) => setFormData({ ...formData, isCore: checked })}
                 className="border-white/20"
               />
               <Label htmlFor="isCore" className="text-white cursor-pointer text-sm">Mark as Core Subject</Label>
@@ -837,7 +723,7 @@ export function ManageSubjectsPage() {
                     <Checkbox
                       id={`class-${cls.id}`}
                       checked={assignmentData.selectedClasses.includes(cls.name)}
-                      onCheckedChange={(checked) => {
+                      onCheckedChange={(checked: boolean) => {
                         if (checked) {
                           setAssignmentData({
                             ...assignmentData,
@@ -872,7 +758,7 @@ export function ManageSubjectsPage() {
                     <Checkbox
                       id={`teacher-${teacher.id}`}
                       checked={assignmentData.selectedTeachers.includes(teacher.id)}
-                      onCheckedChange={(checked) => {
+                      onCheckedChange={(checked: boolean) => {
                         if (checked) {
                           setAssignmentData({
                             ...assignmentData,
