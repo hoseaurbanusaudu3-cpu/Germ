@@ -1,11 +1,16 @@
-const puppeteer = require('puppeteer');
+// const puppeteer = require('puppeteer'); // Temporarily disabled for deployment
 const path = require('path');
 const config = require('../config');
 
 /**
  * Generate PDF report card
+ * NOTE: PDF generation temporarily disabled - will be re-enabled when puppeteer is added back
  */
 const generateResultPDF = async (resultData) => {
+  // Temporary placeholder - PDF generation disabled
+  throw new Error('PDF generation is temporarily unavailable. Please use the web view for now.');
+  
+  /* Original code - will be re-enabled later
   const browser = await puppeteer.launch({
     headless: 'new',
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
@@ -36,6 +41,7 @@ const generateResultPDF = async (resultData) => {
   } finally {
     await browser.close();
   }
+  */
 };
 
 /**
