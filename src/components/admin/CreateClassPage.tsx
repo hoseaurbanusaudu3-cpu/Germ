@@ -36,11 +36,9 @@ export function CreateClassPage({ onBack, onSuccess }: CreateClassPageProps) {
       const classData = {
         name,
         level: schoolLevel,
-        section: section || "",
+        class_teacher_id: null, // Backend expects class_teacher_id
         capacity: parseInt(capacity),
-        classTeacherId: null,
-        status: status as "Active" | "Inactive",
-        academicYear: new Date().getFullYear().toString()
+        status: status.toLowerCase() // Backend expects lowercase: 'active' or 'inactive'
       };
 
       // Save to database via API
@@ -52,13 +50,13 @@ export function CreateClassPage({ onBack, onSuccess }: CreateClassPageProps) {
           id: response.data.id,
           name: response.data.name,
           level: response.data.level,
-          section: response.data.section || "",
+          section: "",
           capacity: response.data.capacity,
           currentStudents: 0,
-          classTeacher: response.data.classTeacher || "Unassigned",
-          classTeacherId: response.data.classTeacherId,
-          status: response.data.status,
-          academicYear: response.data.academicYear
+          classTeacher: "Unassigned",
+          classTeacherId: null,
+          status: response.data.status === 'active' ? 'Active' : 'Inactive',
+          academicYear: new Date().getFullYear().toString()
         };
         
         addClass(newClass);
