@@ -13,6 +13,7 @@ const { sequelize } = require('./models');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 
 // Import routes
+const setupRoutes = require('./routes/setupRoutes');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const sessionRoutes = require('./routes/sessionRoutes');
@@ -102,6 +103,7 @@ app.get('/health', (req, res) => {
 });
 
 // API Routes
+app.use('/api/setup', setupRoutes); // One-time setup endpoint
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/sessions', sessionRoutes);
