@@ -74,8 +74,8 @@ export const handleApiError = (error: any): string => {
 // ==================== AUTHENTICATION API ====================
 
 export const authAPI = {
-  login: async (credentials: { username: string; password: string; role: string }) => {
-    console.log('Attempting login with:', { username: credentials.username, role: credentials.role });
+  login: async (credentials: { email: string; password: string }) => {
+    console.log('Attempting login with:', { email: credentials.email });
     const response = await apiClient.post('/auth/login', credentials);
     console.log('Login response:', response.data);
     

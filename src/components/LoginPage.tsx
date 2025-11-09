@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { School, User, Lock } from "lucide-react";
+import { User, Lock } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
@@ -27,9 +27,8 @@ export function LoginPage({ onLogin, onNavigateToLanding }: LoginPageProps) {
       try {
         // Call real backend API
         const response = await authAPI.login({
-          username: userId,
-          password: password,
-          role: role
+          email: userId,
+          password: password
         });
         
         if (response.success) {
