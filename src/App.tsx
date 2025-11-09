@@ -6,11 +6,10 @@ import { TeacherDashboard } from "./components/TeacherDashboard";
 import { AccountantDashboard } from "./components/AccountantDashboard";
 import { ParentDashboard } from "./components/ParentDashboard";
 import { ResultReportCard } from "./components/ResultReportCard";
-import { TestFormsPage } from "./components/admin/TestFormsPage";
 import { Toaster } from "./components/ui/sonner";
 import { SchoolProvider } from "./contexts/SchoolContext";
 
-type Page = "landing" | "login" | "dashboard" | "report-card" | "test-forms";
+type Page = "landing" | "login" | "dashboard" | "report-card";
 type Role = "" | "admin" | "teacher" | "accountant" | "parent";
 
 export default function App() {
@@ -80,10 +79,6 @@ export default function App() {
     handlePageTransition("landing", "");
   };
 
-  const handleNavigateToTest = () => {
-    handlePageTransition("test-forms");
-  };
-
   const handleLogin = (role: Role) => {
     handlePageTransition("dashboard", role);
   };
@@ -107,7 +102,6 @@ export default function App() {
         {currentPage === "landing" && (
           <LandingPage 
             onNavigateToLogin={handleNavigateToLogin}
-            onNavigateToTest={handleNavigateToTest}
           />
         )}
 
