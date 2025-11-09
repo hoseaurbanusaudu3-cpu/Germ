@@ -1,712 +1,297 @@
-import { useState, memo } from "react";
-import { 
-  Plus, Search, Edit, Trash2, Users, BookOpen, 
-  GraduationCap, Check, AlertCircle, MoreVertical
-} from "lucide-react";
-import { Card, CardContent, CardHeader } from "../ui/card";
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { Badge } from "../ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Plus, Search, Edit, Users, BookOpen } from "lucide-react";
 import { toast } from "sonner";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
-import { useSchool, Class } from "../../contexts/SchoolContext";
+import { useSchool } from "../../contexts/SchoolContext";
+import { Class, Teacher } from "../../types/types";
 
-interface ManageClassesPageProps {
-  onNavigateToCreate?: () => void;
-}
-
-function ManageClassesPageComponent({ onNavigateToCreate }: ManageClassesPageProps) {
-  const { teachers, students, classes, addClass, updateClass, deleteClass } = useSchool();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterLevel, setFilterLevel] = useState("All");
-  const [filterStatus, setFilterStatus] = useState("All");
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [isAssignTeacherDialogOpen, setIsAssignTeacherDialogOpen] = useState(false);
-  const [selectedClass, setSelectedClass] = useState<Class | null>(null);
-  const [selectedTeacherId, setSelectedTeacherId] = useState("");
-
-  // Get active teachers from context
-  const availableTeachers = teachers.filter(t => t.status === 'Active');
-
-  // Form state - simplified without separate class level field  
+const ManageClassesPage = () => {
+  const { classes, teachers, addClass, updateClass, fetchClasses, fetchTeachers } = useSchool();
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentClass, setCurrentClass] = useState<Class | null>(null);
   const [formData, setFormData] = useState({
     name: "",
+    level: "",
     section: "",
-    capacity: "",
-    classTeacherId: "",
-    status: "Active" as "Active" | "Inactive",
-    schoolLevel: "" as "Primary" | "Secondary" | "",
+    classTeacherId: undefined as number | undefined,
+    capacity: 0,
+    status: "Active",
   });
+  const [searchQuery, setSearchQuery] = useState("");
 
+  useEffect(() => {
+    fetchClasses();
+    fetchTeachers();
+  }, []);
 
-  // Filter classes
-  const filteredClasses = classes.filter(cls => {
-    const matchesSearch = cls.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         cls.classTeacher.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesLevel = filterLevel === "All" || cls.level === filterLevel;
-    const matchesStatus = filterStatus === "All" || cls.status === filterStatus;
-    
-    return matchesSearch && matchesLevel && matchesStatus;
-  });
-
-  // Statistics
-  const stats = {
-    totalClasses: classes.length,
-    activeClasses: classes.filter(c => c.status === "Active").length,
-    totalStudents: classes.reduce((sum, c) => sum + c.currentStudents, 0),
-    averageCapacity: classes.length > 0 ? Math.round(classes.reduce((sum, c) => sum + (c.currentStudents / c.capacity * 100), 0) / classes.length) : 0,
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleCreateClass = () => {
-    if (!formData.name || !formData.capacity || !formData.classTeacherId || !formData.schoolLevel) {
-      toast.error("Please fill all required fields");
-      return;
-    }
-
-    const teacher = availableTeachers.find(t => t.id === parseInt(formData.classTeacherId));
-    
-    const newClass: Omit<Class, 'id'> = {
-      name: formData.name,
-      level: formData.schoolLevel, // Use schoolLevel (Primary/Secondary) as the level
-      capacity: parseInt(formData.capacity),
-      currentStudents: 0,
-      classTeacher: teacher ? `${teacher.firstName} ${teacher.lastName}` : "",
-      classTeacherId: parseInt(formData.classTeacherId),
-      section: formData.section,
-      status: formData.status,
-      academicYear: '2024/2025',
-    };
-
-    addClass(newClass);
-    toast.success(`Class "${newClass.name}" created successfully!`);
-    setIsCreateDialogOpen(false);
-    resetForm();
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleEditClass = () => {
-    if (!selectedClass || !formData.name || !formData.capacity || !formData.classTeacherId || !formData.schoolLevel) {
-      toast.error("Please fill all required fields");
-      return;
-    }
-
-    const teacher = availableTeachers.find(t => t.id === parseInt(formData.classTeacherId));
-
-    const updatedClass: Partial<Class> = {
-      name: formData.name,
-      level: formData.schoolLevel, // Use schoolLevel (Primary/Secondary) as the level
-      capacity: parseInt(formData.capacity),
-      classTeacher: teacher ? `${teacher.firstName} ${teacher.lastName}` : "",
-      classTeacherId: parseInt(formData.classTeacherId),
-      section: formData.section,
-      status: formData.status,
-    };
-
-    updateClass(selectedClass.id, updatedClass);
-    toast.success(`Class "${formData.name}" updated successfully!`);
-    setIsEditDialogOpen(false);
-    setSelectedClass(null);
-    resetForm();
-  };
-
-  const handleDeleteClass = () => {
-    if (selectedClass) {
-      if (selectedClass.currentStudents > 0) {
-        toast.error("Cannot delete class with enrolled students. Please move students first.");
-        setDeleteDialogOpen(false);
-        return;
-      }
-
-      deleteClass(selectedClass.id);
-      toast.success(`Class "${selectedClass.name}" deleted successfully!`);
-      setDeleteDialogOpen(false);
-      setSelectedClass(null);
-    }
-  };
-
-  const openEditDialog = (cls: Class) => {
-    setSelectedClass(cls);
+  const handleEditClick = (classItem: Class) => {
+    setIsEditing(true);
+    setCurrentClass(classItem);
     setFormData({
-      name: cls.name,
-      section: cls.section,
-      capacity: cls.capacity.toString(),
-      classTeacherId: cls.classTeacherId?.toString() || "",
-      status: cls.status,
-      schoolLevel: (cls.level as "Primary" | "Secondary") || "",
+      name: classItem.name,
+      level: classItem.level,
+      section: classItem.section,
+      classTeacherId: classItem.classTeacherId,
+      capacity: classItem.capacity,
+      status: classItem.status,
     });
-    setIsEditDialogOpen(true);
+    setIsFormOpen(true);
   };
 
-  const openDeleteDialog = (cls: Class) => {
-    setSelectedClass(cls);
-    setDeleteDialogOpen(true);
-  };
-
-  const openAssignTeacherDialog = (cls: Class) => {
-    setSelectedClass(cls);
-    setSelectedTeacherId(cls.classTeacherId?.toString() || "");
-    setIsAssignTeacherDialogOpen(true);
-  };
-
-  const handleAssignTeacher = () => {
-    if (!selectedClass || !selectedTeacherId) {
-      toast.error("Please select a teacher");
-      return;
-    }
-
-    const teacher = availableTeachers.find(t => t.id.toString() === selectedTeacherId);
-    if (!teacher) {
-      toast.error("Selected teacher not found");
-      return;
-    }
-
-    const updatedClass: Partial<Class> = {
-      classTeacher: `${teacher.firstName} ${teacher.lastName}`,
-      classTeacherId: teacher.id,
-    };
-
-    updateClass(selectedClass.id, updatedClass);
-    toast.success(`${teacher.firstName} ${teacher.lastName} assigned to ${selectedClass.name}!`);
-    setIsAssignTeacherDialogOpen(false);
-    setSelectedClass(null);
-    setSelectedTeacherId("");
-  };
-
-  const resetForm = () => {
+  const handleAddNewClick = () => {
+    setIsEditing(false);
+    setCurrentClass(null);
     setFormData({
       name: "",
+      level: "",
       section: "",
-      capacity: "",
-      classTeacherId: "",
+      classTeacherId: undefined,
+      capacity: 0,
       status: "Active",
-      schoolLevel: "",
     });
+    setIsFormOpen(true);
   };
 
-  const ClassFormDialog = ({ isOpen, onClose, onSubmit, title }: { 
-    isOpen: boolean; 
-    onClose: () => void; 
-    onSubmit: () => void; 
-    title: string;
-  }) => (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl rounded-xl bg-white border border-[#E5E7EB] text-[#1F2937] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-[#1F2937]">{title}</DialogTitle>
-        </DialogHeader>
-        
-        <div className="space-y-4 py-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-[#1F2937]">School Level *</Label>
-              <Select value={formData.schoolLevel} onValueChange={(value) => setFormData(prev => ({ ...prev, schoolLevel: value as "Primary" | "Secondary" }))}>
-                <SelectTrigger className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]">
-                  <SelectValue placeholder="Select school level" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border-[#E5E7EB]">
-                  <SelectItem value="Primary" className="text-[#1F2937]">Primary</SelectItem>
-                  <SelectItem value="Secondary" className="text-[#1F2937]">Secondary</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+  const handleCancel = () => {
+    setIsFormOpen(false);
+    setIsEditing(false);
+    setCurrentClass(null);
+  };
 
-            <div className="space-y-2">
-              <Label className="text-[#1F2937]">Class Name *</Label>
-              <Input
-                placeholder="e.g., JSS 1A, SS 2B, Primary 3"
-                value={formData.name}
-                onChange={(e) => {
-                  e.stopPropagation();
-                  setFormData(prev => ({ ...prev, name: e.target.value }));
-                }}
-                onFocus={(e) => e.stopPropagation()}
-                className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
-              />
-            </div>
-          </div>
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const classData = {
+        ...formData,
+        capacity: Number(formData.capacity),
+        classTeacherId: formData.classTeacherId ? Number(formData.classTeacherId) : undefined,
+      };
 
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-[#1F2937]">Section (Optional)</Label>
-              <Input
-                placeholder="e.g., A, B, C"
-                value={formData.section}
-                onChange={(e) => {
-                  e.stopPropagation();
-                  setFormData(prev => ({ ...prev, section: e.target.value }));
-                }}
-                onFocus={(e) => e.stopPropagation()}
-                className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
-              />
-            </div>
+      if (isEditing && currentClass) {
+        await updateClass(currentClass.id, classData);
+        toast.success("Class updated successfully");
+      } else {
+        await addClass(classData);
+        toast.success("Class added successfully");
+      }
+      setIsFormOpen(false);
+      fetchClasses();
+    } catch (error) {
+      toast.error("Failed to save class");
+      console.error(error);
+    }
+  };
 
-            <div className="space-y-2">
-              <Label className="text-[#1F2937]">Class Capacity *</Label>
-              <Input
-                type="number"
-                placeholder="e.g., 35"
-                value={formData.capacity}
-                onChange={(e) => {
-                  e.stopPropagation();
-                  setFormData(prev => ({ ...prev, capacity: e.target.value }));
-                }}
-                onFocus={(e) => e.stopPropagation()}
-                className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
-              />
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-[#1F2937]">Assign Class Teacher *</Label>
-              <Select value={formData.classTeacherId} onValueChange={(value) => setFormData(prev => ({ ...prev, classTeacherId: value }))}>
-                <SelectTrigger className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]">
-                  <SelectValue placeholder="Select class teacher" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border-[#E5E7EB]">
-                  {availableTeachers.length === 0 ? (
-                    <div className="p-3 text-center text-[#6B7280] text-sm">
-                      No teachers available. Please add teachers first.
-                    </div>
-                  ) : (
-                    availableTeachers.map(teacher => (
-                      <SelectItem 
-                        key={teacher.id} 
-                        value={teacher.id.toString()} 
-                        className="text-[#1F2937]"
-                      >
-                        {teacher.firstName} {teacher.lastName}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-[#1F2937]">Status</Label>
-              <Select value={formData.status} onValueChange={(value) => setFormData(prev => ({ ...prev, status: value as "Active" | "Inactive" }))}>
-                <SelectTrigger className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-white border-[#E5E7EB]">
-                  <SelectItem value="Active" className="text-[#1F2937]">Active</SelectItem>
-                  <SelectItem value="Inactive" className="text-[#1F2937]">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="p-4 bg-[#EFF6FF] border border-[#3B82F6]/20 rounded-lg">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-[#3B82F6] flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-[#1F2937] text-sm font-medium mb-1">Class Configuration Tips</p>
-                <p className="text-[#6B7280] text-xs">
-                  • Select school level (Primary or Secondary)<br />
-                  • Class names should be unique<br />
-                  • Each class can have only one class teacher<br />
-                  • Capacity should match classroom physical capacity
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-3 pt-4 border-t border-[#E5E7EB]">
-          <Button
-            onClick={() => {
-              onClose();
-              resetForm();
-            }}
-            variant="outline"
-            className="rounded-lg border-[#E5E7EB] text-[#6B7280] hover:bg-[#F9FAFB] hover:text-[#1F2937]"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={onSubmit}
-            className="bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-lg shadow-clinical hover:shadow-clinical-lg transition-all"
-          >
-            <Check className="w-4 h-4 mr-2" />
-            {title.includes("Create") ? "Create Class" : "Save Changes"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+  const filteredClasses = classes.filter((classItem) =>
+    classItem.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className="space-y-6">
-      <div className="mb-6">
-        <h1 className="text-[#1F2937] mb-2">Manage Classes</h1>
-        <p className="text-[#6B7280]">Create and manage school classes</p>
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="rounded-lg bg-white border border-[#E5E7EB] shadow-clinical hover:shadow-clinical-lg transition-all hover-lift group">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[#6B7280] text-sm">Total Classes</p>
-              <BookOpen className="w-5 h-5 text-[#3B82F6] group-hover:scale-110 transition-transform" />
-            </div>
-            <p className="text-[#1F2937] mb-1 font-semibold">{stats.totalClasses}</p>
-            <p className="text-xs text-[#6B7280]">Across all levels</p>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-lg bg-white border border-[#E5E7EB] shadow-clinical hover:shadow-clinical-lg transition-all hover-lift group">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[#6B7280] text-sm">Active Classes</p>
-              <Check className="w-5 h-5 text-[#10B981] group-hover:scale-110 transition-transform" />
-            </div>
-            <p className="text-[#1F2937] mb-1 font-semibold">{stats.activeClasses}</p>
-            <p className="text-xs text-[#10B981]">Currently in session</p>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-lg bg-white border border-[#E5E7EB] shadow-clinical hover:shadow-clinical-lg transition-all hover-lift group">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[#6B7280] text-sm">Total Students</p>
-              <Users className="w-5 h-5 text-[#3B82F6] group-hover:scale-110 transition-transform" />
-            </div>
-            <p className="text-[#1F2937] mb-1 font-semibold">{stats.totalStudents}</p>
-            <p className="text-xs text-[#6B7280]">Enrolled students</p>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-lg bg-white border border-[#E5E7EB] shadow-clinical hover:shadow-clinical-lg transition-all hover-lift group">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[#6B7280] text-sm">Avg. Capacity</p>
-              <GraduationCap className="w-5 h-5 text-[#F59E0B] group-hover:scale-110 transition-transform" />
-            </div>
-            <p className="text-[#1F2937] mb-1 font-semibold">{stats.averageCapacity}%</p>
-            <p className="text-xs text-[#F59E0B]">Utilization rate</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Search and Filters */}
-      <Card className="rounded-lg bg-white border border-[#E5E7EB] shadow-clinical">
-        <CardContent className="p-5">
-          <div className="grid md:grid-cols-4 gap-4">
-            <div className="md:col-span-2 space-y-2">
-              <Label className="text-[#1F2937]">Search Classes</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6B7280]" />
-                <Input
-                  placeholder="Search by class name or teacher..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    setSearchQuery(e.target.value);
-                  }}
-                  onFocus={(e) => e.stopPropagation()}
-                  className="h-12 pl-11 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-[#1F2937]">Filter by Level</Label>
-              <Select value={filterLevel} onValueChange={setFilterLevel}>
-                <SelectTrigger className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-white border-[#E5E7EB]">
-                  <SelectItem value="All" className="text-[#1F2937]">All Levels</SelectItem>
-                  <SelectItem value="Primary" className="text-[#1F2937]">Primary</SelectItem>
-                  <SelectItem value="Secondary" className="text-[#1F2937]">Secondary</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-[#1F2937]">Filter by Status</Label>
-              <Select value={filterStatus} onValueChange={setFilterStatus}>
-                <SelectTrigger className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-white border-[#E5E7EB]">
-                  <SelectItem value="All" className="text-[#1F2937]">All Status</SelectItem>
-                  <SelectItem value="Active" className="text-[#1F2937]">Active</SelectItem>
-                  <SelectItem value="Inactive" className="text-[#1F2937]">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="mt-4 flex justify-end">
-            <Button
-              onClick={() => onNavigateToCreate ? onNavigateToCreate() : setIsCreateDialogOpen(true)}
-              className="bg-[#10B981] hover:bg-[#059669] text-white rounded-lg shadow-clinical hover:shadow-clinical-lg transition-all"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create New Class
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Classes Table */}
-      <Card className="rounded-lg bg-white border border-[#E5E7EB] shadow-clinical">
-        <CardHeader className="p-5 border-b border-[#E5E7EB]">
-          <div className="flex items-center justify-between">
-            <h3 className="text-[#1F2937]">All Classes ({filteredClasses.length})</h3>
-            <Badge className="bg-[#3B82F6] text-white border-0">
-              {filterLevel !== "All" ? filterLevel : "All Levels"}
-            </Badge>
-          </div>
+    <div className="p-6 space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Manage Classes</CardTitle>
+          <CardDescription>
+            View, add, and edit school classes.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-[#2563EB] border-none hover:bg-[#2563EB]">
-                  <TableHead className="text-white">Class Name</TableHead>
-                  <TableHead className="text-white">Level</TableHead>
-                  <TableHead className="text-white">Class Teacher</TableHead>
-                  <TableHead className="text-white text-center">Students</TableHead>
-                  <TableHead className="text-white text-center">Capacity</TableHead>
-                  <TableHead className="text-white text-center">Utilization</TableHead>
-                  <TableHead className="text-white text-center">Status</TableHead>
-                  <TableHead className="text-white text-center">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredClasses.length === 0 ? (
-                  <TableRow className="bg-white border-b border-[#E5E7EB]">
-                    <TableCell colSpan={8} className="text-center py-12">
-                      <div className="flex flex-col items-center gap-3">
-                        <BookOpen className="w-12 h-12 text-[#9CA3AF]" />
-                        <p className="text-[#1F2937]">No classes found</p>
-                        <p className="text-[#6B7280] text-sm">
-                          {classes.length === 0 
-                            ? "Click 'Create New Class' to add your first class" 
-                            : "Try adjusting your search or filters"}
-                        </p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredClasses.map((cls) => {
-                    const utilization = Math.round((cls.currentStudents / cls.capacity) * 100);
-                    return (
-                      <TableRow key={cls.id} className="bg-white border-b border-[#E5E7EB] hover:bg-[#F9FAFB]">
-                        <TableCell className="text-[#1F2937]">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-10 h-10 rounded-lg ${
-                              cls.level === "Primary" 
-                                ? "bg-gradient-to-br from-[#10B981] to-[#059669]"
-                                : "bg-gradient-to-br from-[#3B82F6] to-[#2563EB]"
-                            } flex items-center justify-center`}>
-                              <BookOpen className="w-5 h-5 text-white" />
-                            </div>
-                            <div>
-                              <p className="text-[#1F2937] font-medium">{cls.name}</p>
-                              <Badge className={`text-xs mt-1 ${
-                                cls.level === "Primary"
-                                  ? "bg-[#10B981] text-white"
-                                  : "bg-[#3B82F6] text-white"
-                              } border-0`}>
-                                {cls.level}
-                              </Badge>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-[#1F2937]">{cls.level}</TableCell>
-                        <TableCell className="text-[#1F2937]">{cls.classTeacher}</TableCell>
-                        <TableCell className="text-center text-[#1F2937]">{cls.currentStudents}</TableCell>
-                        <TableCell className="text-center text-[#1F2937]">{cls.capacity}</TableCell>
-                        <TableCell className="text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            <div className="w-20 bg-[#E5E7EB] rounded-full h-2">
-                              <div 
-                                className={`h-2 rounded-full ${
-                                  utilization >= 90 ? 'bg-[#EF4444]' :
-                                  utilization >= 75 ? 'bg-[#F59E0B]' : 'bg-[#10B981]'
-                                }`}
-                                style={{ width: `${Math.min(utilization, 100)}%` }}
-                              />
-                            </div>
-                            <span className="text-[#1F2937] text-sm">{utilization}%</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge className={`${
-                            cls.status === "Active" 
-                              ? "bg-[#10B981] text-white" 
-                              : "bg-[#6B7280] text-white"
-                          } border-0`}>
-                            {cls.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <MoreVertical className="w-4 h-4 text-[#6B7280]" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-white border-[#E5E7EB]">
-                              <DropdownMenuItem 
-                                onClick={() => openEditDialog(cls)}
-                                className="text-[#1F2937] cursor-pointer"
-                              >
-                                <Edit className="w-4 h-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => openAssignTeacherDialog(cls)}
-                                className="text-[#3B82F6] cursor-pointer"
-                              >
-                                <Users className="w-4 h-4 mr-2" />
-                                Assign Teacher
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => openDeleteDialog(cls)}
-                                className="text-[#EF4444] cursor-pointer"
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
+        <CardContent>
+          <div className="flex justify-between items-center mb-4">
+            <div className="relative w-1/3">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search classes..."
+                className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Button onClick={handleAddNewClick}>
+              <Plus className="mr-2" /> Add New Class
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredClasses.map((classItem) => (
+              <Card key={classItem.id}>
+                <CardHeader>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-lg">{classItem.name}</CardTitle>
+                      <CardDescription>{classItem.level} - Section {classItem.section}</CardDescription>
+                    </div>
+                    <Badge variant={classItem.status === "Active" ? "default" : "destructive"}>
+                      {classItem.status}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  <div className="flex items-center">
+                    <Users className="w-4 h-4 mr-2 text-muted-foreground" />
+                    <span>Capacity: {classItem.capacity}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <BookOpen className="w-4 h-4 mr-2 text-muted-foreground" />
+                    <span>
+                      Class Teacher:{" "}
+                      {teachers.find(t => t.id === classItem.classTeacherId)?.firstName || "Not Assigned"}
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4 w-full"
+                    onClick={() => handleEditClick(classItem)}
+                  >
+                    <Edit className="w-4 h-4 mr-2" /> Edit
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* Create Dialog */}
-      <ClassFormDialog 
-        isOpen={isCreateDialogOpen} 
-        onClose={() => {
-          setIsCreateDialogOpen(false);
-          resetForm();
-        }} 
-        onSubmit={handleCreateClass}
-        title="Create New Class"
-      />
-
-      {/* Edit Dialog */}
-      <ClassFormDialog 
-        isOpen={isEditDialogOpen} 
-        onClose={() => {
-          setIsEditDialogOpen(false);
-          setSelectedClass(null);
-          resetForm();
-        }} 
-        onSubmit={handleEditClass}
-        title="Edit Class"
-      />
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="bg-white border border-[#E5E7EB]">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-[#1F2937]">Delete Class</AlertDialogTitle>
-            <AlertDialogDescription className="text-[#6B7280]">
-              Are you sure you want to delete "{selectedClass?.name}"? This action cannot be undone.
-              {selectedClass && selectedClass.currentStudents > 0 && (
-                <span className="block mt-2 text-[#EF4444] font-medium">
-                  This class has {selectedClass.currentStudents} enrolled students and cannot be deleted.
-                </span>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-lg border-[#E5E7EB] text-[#6B7280]">Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDeleteClass}
-              className="bg-[#EF4444] hover:bg-[#DC2626] text-white rounded-lg"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Assign Teacher Dialog */}
-      <Dialog open={isAssignTeacherDialogOpen} onOpenChange={setIsAssignTeacherDialogOpen}>
-        <DialogContent className="max-w-md rounded-xl bg-white border border-[#E5E7EB]">
-          <DialogHeader>
-            <DialogTitle className="text-[#1F2937]">Assign Class Teacher</DialogTitle>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <p className="text-sm text-blue-900">
-                <strong>Class:</strong> {selectedClass?.name}
-              </p>
-              <p className="text-sm text-blue-800 mt-1">
-                <strong>Current Teacher:</strong> {selectedClass?.classTeacher || "Unassigned"}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-[#1F2937] font-medium">Select Teacher *</Label>
-              <Select value={selectedTeacherId} onValueChange={setSelectedTeacherId}>
-                <SelectTrigger className="h-12 rounded-lg border-[#E5E7EB]">
-                  <SelectValue placeholder="Select a teacher" />
-                </SelectTrigger>
-                <SelectContent className="bg-white border-[#E5E7EB]">
-                  {availableTeachers.length === 0 ? (
-                    <div className="p-3 text-center text-[#6B7280] text-sm">
-                      No teachers available. Please add teachers first.
-                    </div>
-                  ) : (
-                    availableTeachers.map((teacher) => (
-                      <SelectItem key={teacher.id} value={teacher.id.toString()} className="text-[#1F2937]">
-                        {teacher.firstName} {teacher.lastName}
-                      </SelectItem>
-                    ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-3">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsAssignTeacherDialogOpen(false);
-                setSelectedClass(null);
-                setSelectedTeacherId("");
-              }}
-              className="rounded-lg"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleAssignTeacher}
-              className="bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-lg"
-            >
-              <Users className="w-4 h-4 mr-2" />
-              Assign Teacher
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {isFormOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+          <Card className="w-full max-w-2xl">
+            <CardHeader>
+              <CardTitle>{isEditing ? "Edit Class" : "Add New Class"}</CardTitle>
+              <CardDescription>
+                {isEditing
+                  ? "Update the details of the existing class."
+                  : "Fill in the details for the new class."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Class Name</Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="level">Level</Label>
+                    <Select
+                      name="level"
+                      value={formData.level}
+                      onValueChange={(value) => handleSelectChange("level", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Nursery">Nursery</SelectItem>
+                        <SelectItem value="Primary">Primary</SelectItem>
+                        <SelectItem value="JSS">JSS</SelectItem>
+                        <SelectItem value="SSS">SSS</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="section">Section</Label>
+                    <Input
+                      id="section"
+                      name="section"
+                      value={formData.section}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="classTeacherId">Class Teacher</Label>
+                    <Select
+                      name="classTeacherId"
+                      value={formData.classTeacherId?.toString()}
+                      onValueChange={(value) => handleSelectChange("classTeacherId", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a teacher" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {teachers.map((teacher) => (
+                          <SelectItem key={teacher.id} value={teacher.id.toString()}>
+                            {teacher.firstName} {teacher.lastName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="capacity">Capacity</Label>
+                    <Input
+                      id="capacity"
+                      name="capacity"
+                      type="number"
+                      value={formData.capacity}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="status">Status</Label>
+                    <Select
+                      name="status"
+                      value={formData.status}
+                      onValueChange={(value) => handleSelectChange("status", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Active">Active</SelectItem>
+                        <SelectItem value="Inactive">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button type="button" variant="outline" onClick={handleCancel}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">{isEditing ? "Update" : "Save"}</Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
-}
+};
 
-// Export memoized version to prevent unnecessary re-renders from parent
-export const ManageClassesPage = memo(ManageClassesPageComponent);
+export { ManageClassesPage };
+export default ManageClassesPage;

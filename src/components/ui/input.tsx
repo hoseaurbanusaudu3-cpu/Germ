@@ -2,17 +2,7 @@ import * as React from "react";
 
 import { cn } from "./utils";
 
-function Input({ className, type, onChange, ...props }: React.ComponentProps<"input">) {
-  // Handle mobile typing issues with React 18 batching
-  const handleChange = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (onChange) {
-      // Use startTransition to prevent React from interrupting typing
-      React.startTransition(() => {
-        onChange(e);
-      });
-    }
-  }, [onChange]);
-
+function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
     <input
       type={type}
@@ -27,7 +17,6 @@ function Input({ className, type, onChange, ...props }: React.ComponentProps<"in
         "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
         className,
       )}
-      onChange={handleChange}
       {...props}
     />
   );

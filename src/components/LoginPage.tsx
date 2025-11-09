@@ -1,13 +1,12 @@
 import { useState } from "react";
-import { User, Lock } from "lucide-react";
+import { School, User, Lock } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Card, CardContent, CardHeader } from "./ui/card";
-import schoolLogo from "figma:asset/0f38946e273b623e7cb0b865c2f2fe194a9e92ea.png";
-import { authAPI } from "../services/api";
 import { toast } from "sonner";
+import schoolLogo from "figma:asset/0f38946e273b623e7cb0b865c2f2fe194a9e92ea.png";
 
 interface LoginPageProps {
   onLogin: (role: string) => void;
@@ -20,29 +19,21 @@ export function LoginPage({ onLogin, onNavigateToLanding }: LoginPageProps) {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = async () => {
+  const handleLogin = () => {
     if (role && userId && password) {
       setIsLoading(true);
-      
-      try {
-        // Call real backend API
-        const response = await authAPI.login({
-          email: userId,
-          password: password
-        });
-        
-        if (response.success) {
-          toast.success("Login successful!");
-          onLogin(role);
-        } else {
-          toast.error(response.message || "Login failed");
-          setIsLoading(false);
-        }
-      } catch (error: any) {
-        console.error("Login error:", error);
-        toast.error(error.response?.data?.message || "Login failed. Please check your credentials.");
+      // Simulate API call
+      setTimeout(() => {
         setIsLoading(false);
-      }
+        // Store auth token and user info for session persistence
+        localStorage.setItem('authToken', 'demo-token-' + Date.now());
+        localStorage.setItem('currentUser', JSON.stringify({
+          email: userId,
+          role: role,
+          name: 'User'
+        }));
+        onLogin(role);
+      }, 1000);
     }
   };
 
@@ -98,18 +89,17 @@ export function LoginPage({ onLogin, onNavigateToLanding }: LoginPageProps) {
               </Select>
             </div>
 
-            {/* Email */}
+            {/* User ID / Email */}
             <div className="space-y-2">
-              <Label htmlFor="userId" className="text-[#0A2540]">Email Address</Label>
+              <Label htmlFor="userId" className="text-[#0A2540]">User ID / Email</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
                   id="userId"
-                  type="email"
-                  placeholder="admin@gra.edu.ng"
+                  type="text"
+                  placeholder="Enter your ID or email"
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
-                  autoComplete="email"
                   className="h-12 pl-11 rounded-xl border-2 border-gray-200 focus:border-[#FFD700] transition-colors"
                 />
               </div>

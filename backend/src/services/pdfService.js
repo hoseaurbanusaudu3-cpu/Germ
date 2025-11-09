@@ -1,17 +1,41 @@
-// const puppeteer = require('puppeteer'); // Temporarily disabled for deployment
+const puppeteer = require('puppeteer');
 const path = require('path');
 const config = require('../config');
 
 /**
  * Generate PDF report card
- * NOTE: Puppeteer temporarily disabled for deployment
- * Returns HTML that can be printed to PDF by the browser
  */
 const generateResultPDF = async (resultData) => {
-  // Temporarily return HTML instead of PDF
-  // The frontend can use window.print() to generate PDF
-  const html = generateResultHTML(resultData);
-  return Buffer.from(html, 'utf-8');
+  const browser = await puppeteer.launch({
+    headless: 'new',
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
+  });
+
+  try {
+    const page = await browser.newPage();
+
+    // Generate HTML content
+    const html = generateResultHTML(resultData);
+
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+
+    // Generate PDF
+    const pdf = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '20mm',
+        right: '15mm',
+        bottom: '20mm',
+        left: '15mm'
+      }
+    });
+
+    return pdf;
+  } finally {
+    await browser.close();
+  }
 };
 
 /**

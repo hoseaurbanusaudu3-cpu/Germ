@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { useSchool } from "../../contexts/SchoolContext";
 import { Eye, Download, Filter, FileText, TrendingUp, AlertCircle } from "lucide-react";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 
 export function ViewAllResultsPage() {
   const { compiledResults, students, classes } = useSchool();

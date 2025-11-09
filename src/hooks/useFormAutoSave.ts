@@ -14,8 +14,8 @@ export function useFormAutoSave<T>(
   formData: T,
   enabled: boolean = true
 ) {
-  const timeoutRef = useRef<NodeJS.Timeout>();
-  const initialLoadRef = useRef(true);
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const initialLoadRef = useRef<boolean>(true);
 
   // Auto-save form data to localStorage
   useEffect(() => {

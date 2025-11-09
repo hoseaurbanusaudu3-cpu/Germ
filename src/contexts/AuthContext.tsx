@@ -16,7 +16,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (username: string, password: string, role: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
   hasRole: (roles: string | string[]) => boolean;
@@ -51,9 +51,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initAuth();
   }, []);
 
-  const login = async (username: string, password: string, role: string) => {
+  const login = async (username: string, password: string) => {
     try {
-      const response = await authAPI.login({ username, password, role });
+      const response = await authAPI.login({ email: username, password });
       setUser(response.user);
       
       // Connect socket after successful login

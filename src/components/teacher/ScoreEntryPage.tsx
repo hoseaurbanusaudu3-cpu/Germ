@@ -17,7 +17,7 @@ import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Badge } from "../ui/badge";
 import { useSchool } from "../../contexts/SchoolContext";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 
 export function ScoreEntryPage() {
   const {

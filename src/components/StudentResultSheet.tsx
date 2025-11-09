@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { Download, Printer, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { useSchool, CompiledResult } from "../contexts/SchoolContext";
-import { toast } from "sonner@2.0.3";
+import { toast } from "sonner";
 
 interface StudentResultSheetProps {
   result: CompiledResult;

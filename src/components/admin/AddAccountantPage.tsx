@@ -1,248 +1,265 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader } from "../ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Button } from "../ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { toast } from "sonner@2.0.3";
+import { Badge } from "../ui/badge";
+import { UserPlus, Mail, Phone, MapPin, DollarSign } from "lucide-react";
+import { toast } from "sonner";
 import { useSchool } from "../../contexts/SchoolContext";
-import { Briefcase, Mail, Phone, User, Shield, Save } from "lucide-react";
 
 export function AddAccountantPage() {
-  const { addAccountant, addUser } = useSchool();
+  const { addAccountant } = useSchool();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     phone: "",
+    address: "",
     employeeId: "",
-    username: "",
-    password: "",
-    status: "Active" as "Active" | "Inactive",
+    department: "accounts",
+    salary: "",
+    hireDate: new Date().toISOString().split('T')[0],
+    status: "Active" as "Active" | "Inactive"
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate form
-    if (!formData.firstName || !formData.lastName || !formData.email || 
-        !formData.phone || !formData.employeeId || !formData.username || !formData.password) {
+    
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.employeeId) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    // Add accountant
-    const accountantId = addAccountant({
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      phone: formData.phone,
-      employeeId: formData.employeeId,
-      status: formData.status,
-    });
+    if (!formData.email.includes("@")) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
 
-    // Create user account
-    addUser({
-      username: formData.username,
-      password: formData.password,
-      role: "accountant",
-      linkedId: accountantId,
-      email: formData.email,
-      status: "Active",
-    });
+    try {
+      setIsSubmitting(true);
+      
+      const newAccountant = {
+        id: Date.now(),
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        employeeId: formData.employeeId,
+        department: formData.department,
+        salary: parseFloat(formData.salary),
+        hireDate: formData.hireDate,
+        status: "Active" as "Active" | "Inactive",
+        role: "accountant" as const,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
 
-    toast.success(`Accountant ${formData.firstName} ${formData.lastName} added successfully!`);
+      addAccountant(newAccountant);
+      
+      toast.success("Accountant added successfully!");
+      
+      // Reset form
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        address: "",
+        employeeId: "",
+        department: "accounts",
+        salary: "",
+        hireDate: new Date().toISOString().split('T')[0],
+        status: "active"
+      });
 
-    // Reset form
-    setFormData({
-      firstName: "",
-      lastName: "",
-      email: "",
-      phone: "",
-      employeeId: "",
-      username: "",
-      password: "",
-      status: "Active",
-    });
+    } catch (error) {
+      toast.error("Failed to add accountant. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="space-y-6">
-      <div className="mb-6">
-        <h1 className="text-[#1F2937] mb-2">Add New Accountant</h1>
-        <p className="text-[#6B7280]">Register a new accountant and create their user account</p>
+      {/* Header */}
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight">Add Accountant</h2>
+        <p className="text-muted-foreground">
+          Add a new accountant to the school system
+        </p>
       </div>
 
-      <Card className="rounded-lg bg-white border border-[#E5E7EB] shadow-clinical">
-        <CardHeader className="bg-[#3B82F6] rounded-t-lg p-4 border-b border-[#E5E7EB]">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
-              <Briefcase className="w-5 h-5 text-white" />
-            </div>
-            <h3 className="text-white font-semibold">Accountant Information</h3>
-          </div>
+      {/* Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <UserPlus className="h-5 w-5" />
+            Accountant Information
+          </CardTitle>
+          <CardDescription>
+            Fill in the details below to add a new accountant
+          </CardDescription>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Personal Information */}
-            <div className="space-y-4">
-              <h4 className="text-[#1F2937] font-medium flex items-center gap-2">
-                <User className="w-4 h-4 text-[#3B82F6]" />
-                Personal Information
-              </h4>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-[#1F2937]">First Name *</Label>
-                  <Input
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
-                    placeholder="Enter first name"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-[#1F2937]">Last Name *</Label>
-                  <Input
-                    value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
-                    placeholder="Enter last name"
-                    required
-                  />
-                </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name *</Label>
+                <Input
+                  id="firstName"
+                  placeholder="Enter first name"
+                  value={formData.firstName}
+                  onChange={(e) => handleInputChange("firstName", e.target.value)}
+                  required
+                />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-[#1F2937] flex items-center gap-2">
-                    <Mail className="w-4 h-4" />
-                    Email Address *
-                  </Label>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name *</Label>
+                <Input
+                  id="lastName"
+                  placeholder="Enter last name"
+                  value={formData.lastName}
+                  onChange={(e) => handleInputChange("lastName", e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address *</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
+                    id="email"
                     type="email"
+                    placeholder="accountant@school.com"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
-                    placeholder="accountant@example.com"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-[#1F2937] flex items-center gap-2">
-                    <Phone className="w-4 h-4" />
-                    Phone Number *
-                  </Label>
-                  <Input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
-                    placeholder="08012345678"
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    className="pl-10"
                     required
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[#1F2937]">Employee ID *</Label>
+                <Label htmlFor="phone">Phone Number</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="phone"
+                    placeholder="+234 801 234 5678"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange("phone", e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="address">Address</Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="address"
+                    placeholder="Enter home address"
+                    value={formData.address}
+                    onChange={(e) => handleInputChange("address", e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="employeeId">Employee ID *</Label>
                 <Input
+                  id="employeeId"
+                  placeholder="ACC001"
                   value={formData.employeeId}
-                  onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
-                  className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
-                  placeholder="GRA/ACC/001"
+                  onChange={(e) => handleInputChange("employeeId", e.target.value)}
                   required
                 />
               </div>
             </div>
 
-            {/* User Account Information */}
-            <div className="space-y-4 pt-4 border-t border-[#E5E7EB]">
-              <h4 className="text-[#1F2937] font-medium flex items-center gap-2">
-                <Shield className="w-4 h-4 text-[#3B82F6]" />
-                User Account Credentials
-              </h4>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-[#1F2937]">Username *</Label>
+            {/* Employment Details */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="department">Department</Label>
+                <Select
+                  value={formData.department}
+                  onValueChange={(value: string) => handleInputChange("department", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="accounts">Accounts</SelectItem>
+                    <SelectItem value="finance">Finance</SelectItem>
+                    <SelectItem value="administration">Administration</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="salary">Monthly Salary (₦)</Label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    value={formData.username}
-                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
-                    placeholder="accountant.username"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-[#1F2937]">Password *</Label>
-                  <Input
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
-                    placeholder="Enter password"
-                    required
+                    id="salary"
+                    type="number"
+                    placeholder="0.00"
+                    value={formData.salary}
+                    onChange={(e) => handleInputChange("salary", e.target.value)}
+                    className="pl-10"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-[#1F2937]">Status</Label>
+                <Label htmlFor="hireDate">Hire Date</Label>
+                <Input
+                  id="hireDate"
+                  type="date"
+                  value={formData.hireDate}
+                  onChange={(e) => handleInputChange("hireDate", e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
                 <Select
                   value={formData.status}
-                  onValueChange={(value) => setFormData({ ...formData, status: value as "Active" | "Inactive" })}
+                  onValueChange={(value: string) => handleInputChange("status", value)}
                 >
-                  <SelectTrigger className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border border-[#E5E7EB]">
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Inactive">Inactive</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="active">
+                      <Badge variant="default">Active</Badge>
+                    </SelectItem>
+                    <SelectItem value="inactive">
+                      <Badge variant="secondary">Inactive</Badge>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            <div className="flex gap-3 pt-4">
-              <Button
-                type="submit"
-                className="flex-1 bg-[#3B82F6] text-white hover:bg-[#2563EB] h-12 rounded-lg shadow-clinical hover:shadow-clinical-lg transition-all hover-lift"
-              >
-                <Save className="w-5 h-5 mr-2" />
-                Add Accountant
-              </Button>
-              <Button
-                type="button"
-                onClick={() =>
-                  setFormData({
-                    firstName: "",
-                    lastName: "",
-                    email: "",
-                    phone: "",
-                    employeeId: "",
-                    username: "",
-                    password: "",
-                    status: "Active",
-                  })
-                }
-                className="bg-[#6B7280] text-white hover:bg-[#4B5563] h-12 rounded-lg shadow-clinical hover:shadow-clinical-lg transition-all"
-              >
-                Clear Form
-              </Button>
-            </div>
+            {/* Submit Button */}
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? "Adding Accountant..." : "Add Accountant"}
+            </Button>
           </form>
-        </CardContent>
-      </Card>
-
-      <Card className="rounded-lg bg-[#EFF6FF] border border-[#BFDBFE] shadow-clinical">
-        <CardContent className="p-4">
-          <h4 className="text-[#1E40AF] mb-2 font-medium">Important Notes:</h4>
-          <ul className="text-[#1E40AF] text-sm space-y-1 list-disc list-inside">
-            <li>Accountant will have access to fee management and payment verification</li>
-            <li>Username must be unique across the system</li>
-            <li>Ensure email and phone number are valid for communication</li>
-            <li>Employee ID should follow the format: GRA/ACC/XXX</li>
-          </ul>
         </CardContent>
       </Card>
     </div>

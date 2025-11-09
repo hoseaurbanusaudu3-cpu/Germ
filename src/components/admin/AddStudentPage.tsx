@@ -1,469 +1,352 @@
-import { useState } from 'react';
-import { useSchool } from '../../contexts/SchoolContext';
-import { UserPlus, Save, AlertCircle, Users, Upload, X } from 'lucide-react';
-import { Card, CardContent, CardHeader } from '../ui/card';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Alert, AlertDescription } from '../ui/alert';
-import { toast } from 'sonner@2.0.3';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Badge } from "../ui/badge";
+import { UserPlus, Mail, Phone, MapPin, Calendar, Users, Hash } from "lucide-react";
+import { toast } from "sonner";
+import { useSchool } from "../../contexts/SchoolContext";
 
 export function AddStudentPage() {
-  const { classes, parents, addStudent, currentAcademicYear, students } = useSchool();
-
+  const { addStudent } = useSchool();
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    dateOfBirth: '',
-    gender: '' as 'Male' | 'Female' | '',
-    classId: '',
-    parentId: '',
-    photoUrl: '',
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    address: "",
+    studentId: "",
+    classId: "",
+    dateOfBirth: "",
+    gender: "" as "Male" | "Female" | "",
+    parentName: "",
+    parentPhone: "",
+    parentEmail: "",
+    admissionDate: new Date().toISOString().split('T')[0],
+    status: "active" as "active" | "inactive"
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [photoPreview, setPhotoPreview] = useState<string>('');
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please upload an image file');
-        return;
-      }
-
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Image size should be less than 5MB');
-        return;
-      }
-
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setPhotoPreview(result);
-        setFormData({ ...formData, photoUrl: result });
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleRemovePhoto = () => {
-    setPhotoPreview('');
-    setFormData({ ...formData, photoUrl: '' });
-  };
-
-  const validateForm = () => {
-    const newErrors: { [key: string]: string } = {};
-
-    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
-    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
-    if (!formData.dateOfBirth) newErrors.dateOfBirth = 'Date of birth is required';
-    if (!formData.gender) newErrors.gender = 'Gender is required';
-    if (!formData.classId) newErrors.classId = 'Class is required';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const generateAdmissionNumber = () => {
-    const year = new Date().getFullYear();
-    const studentCount = students.length + 1;
-    return `GRA/${year}/${String(studentCount).padStart(4, '0')}`;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      toast.error('Please fill all required fields');
+    
+    if (!formData.firstName || !formData.lastName || !formData.studentId || !formData.classId) {
+      toast.error("Please fill in all required fields");
       return;
     }
 
-    const selectedClass = classes.find((c) => c.id === parseInt(formData.classId));
-    if (!selectedClass) {
-      toast.error('Invalid class selected');
+    if (formData.email && !formData.email.includes("@")) {
+      toast.error("Please enter a valid email address");
       return;
     }
 
-    const admissionNumber = generateAdmissionNumber();
+    try {
+      setIsSubmitting(true);
+      
+      const newStudent = {
+        id: Date.now(),
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+        studentId: formData.studentId,
+        classId: formData.classId,
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender as "Male" | "Female" | "",
+        parentName: formData.parentName,
+        parentPhone: formData.parentPhone,
+        parentEmail: formData.parentEmail,
+        admissionDate: formData.admissionDate,
+        status: formData.status,
+        role: "student" as const,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
 
-    addStudent({
-      firstName: formData.firstName.trim(),
-      lastName: formData.lastName.trim(),
-      admissionNumber,
-      classId: parseInt(formData.classId),
-      className: selectedClass.name,
-      level: selectedClass.level,
-      parentId: formData.parentId && formData.parentId !== 'none' ? parseInt(formData.parentId) : null,
-      dateOfBirth: formData.dateOfBirth,
-      gender: formData.gender,
-      photoUrl: formData.photoUrl || undefined,
-      status: 'Active',
-      academicYear: currentAcademicYear,
-    });
+      addStudent(newStudent);
+      
+      toast.success("Student added successfully!");
+      
+      // Reset form
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        address: "",
+        studentId: "",
+        classId: "",
+        dateOfBirth: "",
+        gender: "",
+        parentName: "",
+        parentPhone: "",
+        parentEmail: "",
+        admissionDate: new Date().toISOString().split('T')[0],
+        status: "active"
+      });
 
-    toast.success(
-      `Student registered successfully! Admission Number: ${admissionNumber}`
-    );
-
-    // Reset form
-    setFormData({
-      firstName: '',
-      lastName: '',
-      dateOfBirth: '',
-      gender: '',
-      classId: '',
-      parentId: '',
-      photoUrl: '',
-    });
-    setPhotoPreview('');
-    setErrors({});
-  };
-
-  const handleReset = () => {
-    setFormData({
-      firstName: '',
-      lastName: '',
-      dateOfBirth: '',
-      gender: '',
-      classId: '',
-      parentId: '',
-      photoUrl: '',
-    });
-    setPhotoPreview('');
-    setErrors({});
+    } catch (error) {
+      toast.error("Failed to add student. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="space-y-6">
-      <div className="mb-6">
-        <h1 className="text-2xl text-gray-900 mb-2">Register New Student</h1>
-        <p className="text-gray-600">Add a new student to the school management system</p>
+      {/* Header */}
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight">Add Student</h2>
+        <p className="text-muted-foreground">
+          Add a new student to the school system
+        </p>
       </div>
 
-      {/* Info Alert */}
-      <Alert className="bg-blue-50 border-blue-200 rounded-xl">
-        <AlertCircle className="h-4 w-4 text-blue-600" />
-        <AlertDescription className="text-gray-900">
-          <strong>Student Registration Process:</strong>
-          <br />
-          1. Enter student personal information
-          <br />
-          2. Assign to a class (determines fee structure)
-          <br />
-          3. Optionally link to existing parent
-          <br />
-          4. Admission number will be auto-generated
-          <br />• You can link parent later from "Link Student-Parent" page
-        </AlertDescription>
-      </Alert>
-
-      {/* Registration Form */}
-      <form onSubmit={handleSubmit}>
-        <Card className="rounded-xl bg-white border border-gray-200 shadow-sm">
-          <CardHeader className="p-5 border-b border-gray-200">
-            <div className="flex items-center gap-2">
-              <UserPlus className="w-5 h-5 text-[#2563EB]" />
-              <h3 className="text-lg text-gray-900">Student Information</h3>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6 space-y-6">
+      {/* Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <UserPlus className="h-5 w-5" />
+            Student Information
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Personal Information */}
-            <div className="space-y-4">
-              <h4 className="text-md text-gray-900 font-medium">Personal Details</h4>
-              
-              {/* Photo Upload Section */}
+            <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label className="text-gray-700">Student Photo (Optional)</Label>
-                <div className="flex items-start gap-4">
-                  {/* Photo Preview */}
-                  <div className="flex-shrink-0">
-                    {photoPreview ? (
-                      <div className="relative">
-                        <img
-                          src={photoPreview}
-                          alt="Student preview"
-                          className="w-32 h-32 rounded-xl object-cover border-2 border-gray-300"
-                        />
-                        <button
-                          type="button"
-                          onClick={handleRemovePhoto}
-                          className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-md"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="w-32 h-32 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
-                        <Upload className="w-8 h-8 text-gray-400" />
-                      </div>
-                    )}
-                  </div>
+                <Label htmlFor="firstName">First Name *</Label>
+                <Input
+                  id="firstName"
+                  placeholder="Enter first name"
+                  value={formData.firstName}
+                  onChange={(e) => handleInputChange("firstName", e.target.value)}
+                  required
+                />
+              </div>
 
-                  {/* Upload Button */}
-                  <div className="flex-1 space-y-2">
-                    <input
-                      type="file"
-                      id="photo-upload"
-                      accept="image/*"
-                      onChange={handlePhotoUpload}
-                      className="hidden"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => document.getElementById('photo-upload')?.click()}
-                      className="rounded-xl border-gray-300 text-gray-700 hover:bg-gray-50"
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      {photoPreview ? 'Change Photo' : 'Upload Photo'}
-                    </Button>
-                    <p className="text-xs text-gray-500">
-                      Upload a passport-size photo (JPG, PNG). Max size: 5MB
-                    </p>
-                  </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name *</Label>
+                <Input
+                  id="lastName"
+                  placeholder="Enter last name"
+                  value={formData.lastName}
+                  onChange={(e) => handleInputChange("lastName", e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="student@school.com"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    className="pl-10"
+                  />
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-gray-700">
-                    First Name <span className="text-red-500">*</span>
-                  </Label>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Enter first name"
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    className={`h-12 rounded-xl border ${
-                      errors.firstName ? 'border-red-500' : 'border-gray-300'
-                    } bg-white text-gray-900`}
+                    id="phone"
+                    placeholder="+234 801 234 5678"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange("phone", e.target.value)}
+                    className="pl-10"
                   />
-                  {errors.firstName && (
-                    <p className="text-xs text-red-500">{errors.firstName}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-gray-700">
-                    Last Name <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    placeholder="Enter last name"
-                    value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    className={`h-12 rounded-xl border ${
-                      errors.lastName ? 'border-red-500' : 'border-gray-300'
-                    } bg-white text-gray-900`}
-                  />
-                  {errors.lastName && <p className="text-xs text-red-500">{errors.lastName}</p>}
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-gray-700">
-                    Date of Birth <span className="text-red-500">*</span>
-                  </Label>
+              <div className="space-y-2">
+                <Label htmlFor="studentId">Student ID *</Label>
+                <div className="relative">
+                  <Hash className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
+                    id="studentId"
+                    placeholder="STU001"
+                    value={formData.studentId}
+                    onChange={(e) => handleInputChange("studentId", e.target.value)}
+                    className="pl-10"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="classId">Class *</Label>
+                <Select
+                  value={formData.classId}
+                  onValueChange={(value: string) => handleInputChange("classId", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select class" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="JSS1">JSS 1</SelectItem>
+                    <SelectItem value="JSS2">JSS 2</SelectItem>
+                    <SelectItem value="JSS3">JSS 3</SelectItem>
+                    <SelectItem value="SSS1">SSS 1</SelectItem>
+                    <SelectItem value="SSS2">SSS 2</SelectItem>
+                    <SelectItem value="SSS3">SSS 3</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="dateOfBirth"
                     type="date"
                     value={formData.dateOfBirth}
-                    onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                    className={`h-12 rounded-xl border ${
-                      errors.dateOfBirth ? 'border-red-500' : 'border-gray-300'
-                    } bg-white text-gray-900`}
+                    onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
+                    className="pl-10"
                   />
-                  {errors.dateOfBirth && (
-                    <p className="text-xs text-red-500">{errors.dateOfBirth}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-gray-700">
-                    Gender <span className="text-red-500">*</span>
-                  </Label>
-                  <Select
-                    value={formData.gender}
-                    onValueChange={(value: 'Male' | 'Female') =>
-                      setFormData({ ...formData, gender: value })
-                    }
-                  >
-                    <SelectTrigger
-                      className={`h-12 rounded-xl border ${
-                        errors.gender ? 'border-red-500' : 'border-gray-300'
-                      } bg-white text-gray-900`}
-                    >
-                      <SelectValue placeholder="Select gender" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border-gray-200">
-                      <SelectItem value="Male" className="text-gray-900">
-                        Male
-                      </SelectItem>
-                      <SelectItem value="Female" className="text-gray-900">
-                        Female
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {errors.gender && <p className="text-xs text-red-500">{errors.gender}</p>}
                 </div>
               </div>
-            </div>
 
-            {/* Academic Information */}
-            <div className="space-y-4 pt-4 border-t border-gray-200">
-              <h4 className="text-md text-gray-900 font-medium">Academic Details</h4>
+              <div className="space-y-2">
+                <Label htmlFor="gender">Gender</Label>
+                <Select
+                  value={formData.gender}
+                  onValueChange={(value: string) => handleInputChange("gender", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Male">
+                      <Badge variant="default">Male</Badge>
+                    </SelectItem>
+                    <SelectItem value="Female">
+                      <Badge variant="secondary">Female</Badge>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-gray-700">
-                    Assign to Class <span className="text-red-500">*</span>
-                  </Label>
-                  <Select
-                    value={formData.classId}
-                    onValueChange={(value) => setFormData({ ...formData, classId: value })}
-                  >
-                    <SelectTrigger
-                      className={`h-12 rounded-xl border ${
-                        errors.classId ? 'border-red-500' : 'border-gray-300'
-                      } bg-white text-gray-900`}
-                    >
-                      <SelectValue placeholder="Select class" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border-gray-200">
-                      {classes
-                        .filter((c) => c.status === 'Active')
-                        .map((cls) => (
-                          <SelectItem key={cls.id} value={cls.id.toString()} className="text-gray-900">
-                            {cls.name} - {cls.level} ({cls.currentStudents}/{cls.capacity} students)
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.classId && <p className="text-xs text-red-500">{errors.classId}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-gray-700">Academic Year</Label>
+              <div className="space-y-2">
+                <Label htmlFor="admissionDate">Admission Date</Label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
-                    value={currentAcademicYear}
-                    disabled
-                    className="h-12 rounded-xl border border-gray-300 bg-gray-100 text-gray-900"
+                    id="admissionDate"
+                    type="date"
+                    value={formData.admissionDate}
+                    onChange={(e) => handleInputChange("admissionDate", e.target.value)}
+                    className="pl-10"
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value: string) => handleInputChange("status", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">
+                      <Badge variant="default">Active</Badge>
+                    </SelectItem>
+                    <SelectItem value="inactive">
+                      <Badge variant="secondary">Inactive</Badge>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             {/* Parent Information */}
-            <div className="space-y-4 pt-4 border-t border-gray-200">
-              <h4 className="text-md text-gray-900 font-medium">Parent/Guardian Information</h4>
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Parent/Guardian Information
+              </h3>
+              
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="parentName">Parent/Guardian Name</Label>
+                  <Input
+                    id="parentName"
+                    placeholder="Enter parent name"
+                    value={formData.parentName}
+                    onChange={(e) => handleInputChange("parentName", e.target.value)}
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label className="text-gray-700">Link to Existing Parent (Optional)</Label>
-                <Select
-                  value={formData.parentId}
-                  onValueChange={(value) => setFormData({ ...formData, parentId: value })}
-                >
-                  <SelectTrigger className="h-12 rounded-xl border border-gray-300 bg-white text-gray-900">
-                    <SelectValue placeholder="Select parent (optional)" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border-gray-200">
-                    <SelectItem value="none" className="text-gray-900">
-                      No parent linked
-                    </SelectItem>
-                    {parents
-                      .filter((p) => p.status === 'Active')
-                      .map((parent) => (
-                        <SelectItem key={parent.id} value={parent.id.toString()} className="text-gray-900">
-                          {parent.firstName} {parent.lastName} - {parent.phone}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-gray-500">
-                  You can link parent now or later from "Link Student-Parent" page
-                </p>
+                <div className="space-y-2">
+                  <Label htmlFor="parentPhone">Parent Phone</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="parentPhone"
+                      placeholder="+234 801 234 5678"
+                      value={formData.parentPhone}
+                      onChange={(e) => handleInputChange("parentPhone", e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="parentEmail">Parent Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="parentEmail"
+                      type="email"
+                      placeholder="parent@email.com"
+                      value={formData.parentEmail}
+                      onChange={(e) => handleInputChange("parentEmail", e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Preview */}
-            {formData.firstName && formData.lastName && (
-              <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
-                <p className="text-sm text-gray-700">
-                  <strong>Preview:</strong>
-                </p>
-                <p className="text-gray-900">
-                  Student: {formData.firstName} {formData.lastName}
-                </p>
-                {formData.classId && (
-                  <p className="text-gray-600 text-sm">
-                    Class: {classes.find((c) => c.id === parseInt(formData.classId))?.name}
-                  </p>
-                )}
-                <p className="text-gray-600 text-sm">
-                  Admission Number: {generateAdmissionNumber()} (will be auto-generated)
-                </p>
+            {/* Address */}
+            <div className="space-y-2">
+              <Label htmlFor="address">Address</Label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="address"
+                  placeholder="Enter home address"
+                  value={formData.address}
+                  onChange={(e) => handleInputChange("address", e.target.value)}
+                  className="pl-10"
+                />
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Action Buttons */}
-        <div className="flex justify-end gap-3 mt-6">
-          <Button
-            type="button"
-            onClick={handleReset}
-            variant="outline"
-            className="rounded-xl border-gray-300 text-gray-700 hover:bg-gray-50"
-          >
-            Reset Form
-          </Button>
-          <Button
-            type="submit"
-            className="bg-[#10B981] hover:bg-[#059669] text-white rounded-xl shadow-sm"
-          >
-            <Save className="w-4 h-4 mr-2" />
-            Register Student
-          </Button>
-        </div>
-      </form>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="rounded-xl bg-white border border-gray-200 shadow-sm">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-600">Total Students</p>
-              <Users className="w-5 h-5 text-[#2563EB]" />
             </div>
-            <p className="text-2xl text-gray-900">{students.length}</p>
-          </CardContent>
-        </Card>
 
-        <Card className="rounded-xl bg-white border border-gray-200 shadow-sm">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-600">Active Classes</p>
-              <Users className="w-5 h-5 text-[#10B981]" />
-            </div>
-            <p className="text-2xl text-gray-900">
-              {classes.filter((c) => c.status === 'Active').length}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-xl bg-white border border-gray-200 shadow-sm">
-          <CardContent className="p-5">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-600">Registered Parents</p>
-              <Users className="w-5 h-5 text-[#3B82F6]" />
-            </div>
-            <p className="text-2xl text-gray-900">{parents.length}</p>
-          </CardContent>
-        </Card>
-      </div>
+            {/* Submit Button */}
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? "Adding Student..." : "Add Student"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Checkbox } from '../ui/checkbox';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 export function AddParentPage() {
   const { students, parents, addParent, addUser, linkParentToStudent } = useSchool();

@@ -11,7 +11,7 @@ export function FeeManagementPage() {
   const [selectedTab, setSelectedTab] = useState<"overview" | "structures" | "balances">("overview");
 
   // Calculate statistics
-  const totalExpectedRevenue = feeStructures.reduce((sum, fee) => sum + (fee.totalFee * classes.find(c => c.id === fee.classId)?.currentStudents || 0), 0);
+  const totalExpectedRevenue = feeStructures.reduce((sum, fee) => sum + (fee.totalFee * (classes.find(c => c.id === fee.classId)?.currentStudents || 0)), 0);
   const totalCollected = payments.filter(p => p.status === 'Verified').reduce((sum, p) => sum + p.amount, 0);
   const totalOutstanding = studentFeeBalances.reduce((sum, b) => sum + b.balance, 0);
   const studentsWithBalances = studentFeeBalances.filter(b => b.balance > 0).length;
