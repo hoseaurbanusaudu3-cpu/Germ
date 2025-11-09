@@ -1,4 +1,4 @@
-import { useState, useRef, memo } from "react";
+import { useState, memo } from "react";
 import { 
   Plus, Search, Edit, Trash2, Users, BookOpen, 
   GraduationCap, Check, AlertCircle, MoreVertical
@@ -29,13 +29,15 @@ function ManageClassesPageComponent() {
   // Get active teachers from context
   const availableTeachers = teachers.filter(t => t.status === 'Active');
 
-  // UNCONTROLLED INPUTS - Using refs instead of state to fix typing issue
-  const nameRef = useRef<HTMLInputElement>(null);
-  const sectionRef = useRef<HTMLInputElement>(null);
-  const capacityRef = useRef<HTMLInputElement>(null);
-  const schoolLevelRef = useRef<string>("");
-  const teacherIdRef = useRef<string>("");
-  const statusRef = useRef<string>("Active");
+  // Form state - simplified without separate class level field  
+  const [formData, setFormData] = useState({
+    name: "",
+    section: "",
+    capacity: "",
+    classTeacherId: "",
+    status: "Active" as "Active" | "Inactive",
+    schoolLevel: "" as "Primary" | "Secondary" | "",
+  });
 
 
   // Filter classes
