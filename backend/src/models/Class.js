@@ -30,10 +30,6 @@ module.exports = (sequelize, DataTypes) => {
     status: {
       type: DataTypes.ENUM('active', 'inactive'),
       defaultValue: 'active'
-    },
-    no_in_class: {
-      type: DataTypes.INTEGER,
-      allowNull: true
     }
   }, {
     tableName: 'classes',
