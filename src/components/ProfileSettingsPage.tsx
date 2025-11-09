@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { User, Mail, Phone, Lock, Bell, Shield, Camera, Save, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Input } from './ui/input';
@@ -54,6 +54,39 @@ export function ProfileSettingsPage() {
     newPassword: '',
     confirmPassword: ''
   });
+
+  // Optimized handlers to prevent re-renders on mobile
+  const handleFirstNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setProfileData(prev => ({ ...prev, firstName: e.target.value }));
+  }, []);
+
+  const handleLastNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setProfileData(prev => ({ ...prev, lastName: e.target.value }));
+  }, []);
+
+  const handleEmailChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setProfileData(prev => ({ ...prev, email: e.target.value }));
+  }, []);
+
+  const handlePhoneChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setProfileData(prev => ({ ...prev, phone: e.target.value }));
+  }, []);
+
+  const handleAddressChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setProfileData(prev => ({ ...prev, address: e.target.value }));
+  }, []);
+
+  const handleCurrentPasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSecurityData(prev => ({ ...prev, currentPassword: e.target.value }));
+  }, []);
+
+  const handleNewPasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSecurityData(prev => ({ ...prev, newPassword: e.target.value }));
+  }, []);
+
+  const handleConfirmPasswordChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSecurityData(prev => ({ ...prev, confirmPassword: e.target.value }));
+  }, []);
 
   const [notifications, setNotifications] = useState<NotificationSettings>({
     emailNotifications: true,
@@ -186,7 +219,7 @@ export function ProfileSettingsPage() {
                   <Input
                     id="firstName"
                     value={profileData.firstName}
-                    onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
+                    onChange={handleFirstNameChange}
                     disabled={!isEditing}
                     className="border-[#0A2540]/20 rounded-xl disabled:opacity-60"
                   />
@@ -196,7 +229,7 @@ export function ProfileSettingsPage() {
                   <Input
                     id="lastName"
                     value={profileData.lastName}
-                    onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
+                    onChange={handleLastNameChange}
                     disabled={!isEditing}
                     className="border-[#0A2540]/20 rounded-xl disabled:opacity-60"
                   />
@@ -209,7 +242,7 @@ export function ProfileSettingsPage() {
                       id="email"
                       type="email"
                       value={profileData.email}
-                      onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                      onChange={handleEmailChange}
                       disabled={!isEditing}
                       className="pl-10 border-[#0A2540]/20 rounded-xl disabled:opacity-60"
                     />
@@ -223,7 +256,7 @@ export function ProfileSettingsPage() {
                       id="phone"
                       type="tel"
                       value={profileData.phone}
-                      onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                      onChange={handlePhoneChange}
                       disabled={!isEditing}
                       className="pl-10 border-[#0A2540]/20 rounded-xl disabled:opacity-60"
                     />
@@ -252,7 +285,7 @@ export function ProfileSettingsPage() {
                   <Input
                     id="address"
                     value={profileData.address}
-                    onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
+                    onChange={handleAddressChange}
                     disabled={!isEditing}
                     className="border-[#0A2540]/20 rounded-xl disabled:opacity-60"
                   />
@@ -283,7 +316,7 @@ export function ProfileSettingsPage() {
                           id="currentPassword"
                           type="password"
                           value={securityData.currentPassword}
-                          onChange={(e) => setSecurityData({ ...securityData, currentPassword: e.target.value })}
+                          onChange={handleCurrentPasswordChange}
                           className="pl-10 border-[#0A2540]/20 rounded-xl"
                           placeholder="Enter current password"
                         />
@@ -297,7 +330,7 @@ export function ProfileSettingsPage() {
                           id="newPassword"
                           type="password"
                           value={securityData.newPassword}
-                          onChange={(e) => setSecurityData({ ...securityData, newPassword: e.target.value })}
+                          onChange={handleNewPasswordChange}
                           className="pl-10 border-[#0A2540]/20 rounded-xl"
                           placeholder="Enter new password"
                         />
@@ -311,7 +344,7 @@ export function ProfileSettingsPage() {
                           id="confirmPassword"
                           type="password"
                           value={securityData.confirmPassword}
-                          onChange={(e) => setSecurityData({ ...securityData, confirmPassword: e.target.value })}
+                          onChange={handleConfirmPasswordChange}
                           className="pl-10 border-[#0A2540]/20 rounded-xl"
                           placeholder="Confirm new password"
                         />
