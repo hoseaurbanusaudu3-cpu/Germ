@@ -4,6 +4,7 @@ import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { UncontrolledClassForm } from "./UncontrolledClassForm";
 import { SimpleSubjectForm } from "./SimpleSubjectForm";
+import { IsolatedTestForm } from "./IsolatedTestForm";
 import { Plus } from "lucide-react";
 
 export function TestFormsPage() {
@@ -39,6 +40,20 @@ export function TestFormsPage() {
             Test the new simple forms for typing issues
           </p>
         </div>
+
+        {/* ISOLATED TEST - PURE HTML */}
+        <Card className="bg-yellow-500/20 border-yellow-500/50 mb-6">
+          <CardContent className="p-4">
+            <p className="text-yellow-300 font-bold mb-2">
+              ⚠️ START HERE: Pure HTML Test (No React Components)
+            </p>
+            <p className="text-yellow-200 text-sm">
+              If these inputs work, the problem is in our components. If they don't work, something else is wrong.
+            </p>
+          </CardContent>
+        </Card>
+
+        <IsolatedTestForm />
 
         {/* Test Instructions */}
         <Card className="bg-white/10 border-white/20">
