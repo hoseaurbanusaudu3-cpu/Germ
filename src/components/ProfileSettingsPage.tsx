@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { User, Mail, Phone, Lock, Bell, Shield, Camera, Save, X } from 'lucide-react';
+import { User, Mail, Phone, Lock, Bell, Camera, Save, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
@@ -8,7 +8,7 @@ import { Switch } from './ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Separator } from './ui/separator';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface ProfileData {
   firstName: string;
