@@ -92,10 +92,6 @@ export default function App() {
     handlePageTransition("landing", "");
   };
 
-  const handleViewReportCard = () => {
-    handlePageTransition("report-card");
-  };
-
   const handleCloseReportCard = () => {
     handlePageTransition("dashboard");
   };
