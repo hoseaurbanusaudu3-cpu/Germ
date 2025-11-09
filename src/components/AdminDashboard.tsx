@@ -19,8 +19,10 @@ import { NotificationSystemPage } from "./admin/NotificationSystemPage";
 import { ApproveResultsPage } from "./admin/ApproveResultsPage";
 import { SystemSettingsPage } from "./admin/SystemSettingsPage";
 import { LinkStudentParentPage } from "./admin/LinkStudentParentPage";
+// Temporarily use working test versions
 import { ManageClassesPage } from "./admin/ManageClassesPage";
 import { ManageSubjectsPage } from "./admin/ManageSubjectsPage";
+// TODO: These are having typing issues, may need to replace with uncontrolled versions
 import { ManageTeacherAssignmentsPage } from "./admin/ManageTeacherAssignmentsPage";
 import { PromotionSystemPage } from "./admin/PromotionSystemPage";
 import { ViewAllResultsPage } from "./admin/ViewAllResultsPage";
