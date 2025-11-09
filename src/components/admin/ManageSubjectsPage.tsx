@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { 
   Plus, Search, Edit, Trash2, BookOpen, Users, Link as LinkIcon,
   X, Check, AlertCircle, MoreVertical, UserPlus, Loader2
@@ -233,6 +233,18 @@ export function ManageSubjectsPage() {
     isCore: false,
   });
 
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, name: e.target.value }));
+  }, []);
+
+  const handleCodeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, code: e.target.value.toUpperCase() }));
+  }, []);
+
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  }, []);
+
   // Assignment state
   const [assignmentData, setAssignmentData] = useState({
     selectedClasses: [] as string[],
@@ -430,7 +442,7 @@ export function ManageSubjectsPage() {
               <Input
                 placeholder="e.g., Mathematics, English"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={handleNameChange}
                 className="h-12 rounded-xl border border-white/10 bg-[#0F243E] text-white"
               />
             </div>
@@ -440,7 +452,7 @@ export function ManageSubjectsPage() {
               <Input
                 placeholder="e.g., MTH101"
                 value={formData.code}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                onChange={handleCodeChange}
                 className="h-12 rounded-xl border border-white/10 bg-[#0F243E] text-white"
               />
             </div>
@@ -594,7 +606,7 @@ export function ManageSubjectsPage() {
                 <Input
                   placeholder="Search by name or code..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={handleSearchChange}
                   className="h-12 pl-11 rounded-xl border border-white/10 bg-[#0F243E] text-white"
                 />
               </div>
