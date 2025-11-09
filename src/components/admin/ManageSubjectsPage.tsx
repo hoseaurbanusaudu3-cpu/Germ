@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { 
   Plus, Search, Edit, Trash2, BookOpen, Users, Link as LinkIcon,
   Check, AlertCircle, MoreVertical, UserPlus
@@ -41,7 +41,7 @@ interface Class {
   level: string;
 }
 
-export function ManageSubjectsPage() {
+function ManageSubjectsPageComponent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
@@ -858,3 +858,6 @@ export function ManageSubjectsPage() {
     </div>
   );
 }
+
+// Export memoized version to prevent unnecessary re-renders from parent
+export const ManageSubjectsPage = memo(ManageSubjectsPageComponent);

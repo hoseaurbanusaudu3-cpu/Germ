@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, memo } from "react";
 import { 
   Plus, Search, Edit, Trash2, Users, BookOpen, 
   GraduationCap, Check, AlertCircle, MoreVertical
@@ -16,7 +16,7 @@ import { toast } from "sonner@2.0.3";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { useSchool, Class } from "../../contexts/SchoolContext";
 
-export function ManageClassesPage() {
+function ManageClassesPageComponent() {
   const { teachers, students, classes, addClass, updateClass, deleteClass } = useSchool();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterLevel, setFilterLevel] = useState("All");
@@ -604,3 +604,6 @@ export function ManageClassesPage() {
     </div>
   );
 }
+
+// Export memoized version to prevent unnecessary re-renders from parent
+export const ManageClassesPage = memo(ManageClassesPageComponent);
