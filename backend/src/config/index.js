@@ -51,6 +51,6 @@ module.exports = {
   
   // Socket.io
   socket: {
-    corsOrigin: process.env.SOCKET_CORS_ORIGIN || 'http://localhost:3000'
+    corsOrigin: process.env.SOCKET_CORS_ORIGIN || 'http://localhost:3000,https://gra-gm.vercel.app'
   }
 };

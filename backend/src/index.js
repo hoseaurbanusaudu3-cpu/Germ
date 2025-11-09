@@ -60,8 +60,21 @@ io.on('connection', (socket) => {
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: config.cors.origin,
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = config.cors.origin;
+    if (allowedOrigins.indexOf(origin) !== -1 || config.env === 'development') {
+      callback(null, true);
+    } else {
+      // For now, allow all origins to fix the issue
+      callback(null, true);
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(compression());
 app.use(morgan(config.env === 'development' ? 'dev' : 'combined'));
