@@ -21,8 +21,15 @@ const apiClient: AxiosInstance = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('authToken');
+    console.log('Request to:', config.url);
+    console.log('Token exists:', !!token);
+    console.log('Token (first 20 chars):', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('Authorization header set');
+    } else {
+      console.warn('No token found in localStorage!');
     }
     return config;
   },
