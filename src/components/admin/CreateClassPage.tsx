@@ -14,29 +14,20 @@ interface CreateClassPageProps {
 }
 
 export function CreateClassPage({ onBack, onSuccess }: CreateClassPageProps) {
-  const { teachers, addClass } = useSchool();
+  const { addClass } = useSchool();
   
   // Simple individual state for each field
   const [name, setName] = useState("");
   const [section, setSection] = useState("");
   const [capacity, setCapacity] = useState("");
   const [schoolLevel, setSchoolLevel] = useState("");
-  const [teacherId, setTeacherId] = useState("");
   const [status, setStatus] = useState("Active");
-
-  const availableTeachers = teachers.filter(t => t.status === 'Active');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name || !capacity || !schoolLevel || !teacherId) {
+    if (!name || !capacity || !schoolLevel) {
       toast.error("Please fill all required fields");
-      return;
-    }
-
-    const teacher = teachers.find(t => t.id.toString() === teacherId);
-    if (!teacher) {
-      toast.error("Selected teacher not found");
       return;
     }
 
@@ -47,8 +38,8 @@ export function CreateClassPage({ onBack, onSuccess }: CreateClassPageProps) {
       section: section || "",
       capacity: parseInt(capacity),
       currentStudents: 0,
-      classTeacher: `${teacher.firstName} ${teacher.lastName}`,
-      classTeacherId: teacher.id,
+      classTeacher: "Unassigned",
+      classTeacherId: null,
       status: status as "Active" | "Inactive",
       academicYear: new Date().getFullYear().toString()
     };
@@ -61,7 +52,6 @@ export function CreateClassPage({ onBack, onSuccess }: CreateClassPageProps) {
     setSection("");
     setCapacity("");
     setSchoolLevel("");
-    setTeacherId("");
     setStatus("Active");
     
     onSuccess();
@@ -142,30 +132,8 @@ export function CreateClassPage({ onBack, onSuccess }: CreateClassPageProps) {
               </div>
             </div>
 
-            {/* Row 3: Class Teacher and Status */}
+            {/* Row 3: Status */}
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label className="text-[#1F2937] font-medium">Class Teacher *</Label>
-                <Select value={teacherId} onValueChange={setTeacherId}>
-                  <SelectTrigger className="h-12 rounded-lg border-[#E5E7EB]">
-                    <SelectValue placeholder="Select class teacher" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableTeachers.length === 0 ? (
-                      <div className="p-3 text-center text-[#6B7280] text-sm">
-                        No teachers available. Please add teachers first.
-                      </div>
-                    ) : (
-                      availableTeachers.map((teacher) => (
-                        <SelectItem key={teacher.id} value={teacher.id.toString()}>
-                          {teacher.firstName} {teacher.lastName}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div className="space-y-2">
                 <Label className="text-[#1F2937] font-medium">Status</Label>
                 <Select value={status} onValueChange={setStatus}>
@@ -209,8 +177,8 @@ export function CreateClassPage({ onBack, onSuccess }: CreateClassPageProps) {
           <ul className="text-sm text-blue-800 space-y-1">
             <li>• Use clear naming conventions (e.g., JSS 1A, Primary 3B)</li>
             <li>• Set realistic capacity based on classroom size</li>
-            <li>• Assign an active teacher as class teacher</li>
-            <li>• You can edit class details later from the Manage Classes page</li>
+            <li>• Class teacher can be assigned later from Manage Classes page</li>
+            <li>• You can edit class details anytime from the Manage Classes page</li>
           </ul>
         </CardContent>
       </Card>
