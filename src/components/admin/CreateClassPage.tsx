@@ -41,8 +41,12 @@ export function CreateClassPage({ onBack, onSuccess }: CreateClassPageProps) {
         status: status.toLowerCase() // Backend expects lowercase: 'active' or 'inactive'
       };
 
+      console.log("Sending class data:", classData);
+      
       // Save to database via API
       const response = await classesAPI.create(classData);
+      
+      console.log("API Response:", response);
       
       if (response.success) {
         // Also update local state
@@ -75,7 +79,15 @@ export function CreateClassPage({ onBack, onSuccess }: CreateClassPageProps) {
       }
     } catch (error: any) {
       console.error("Error creating class:", error);
-      toast.error(error.response?.data?.message || "Failed to create class");
+      console.error("Error response:", error.response);
+      console.error("Error data:", error.response?.data);
+      
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          error.message || 
+                          "Failed to create class";
+      
+      toast.error(errorMessage);
     }
   };
 
