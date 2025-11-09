@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
-import { SimpleClassForm } from "./SimpleClassForm";
+import { UncontrolledClassForm } from "./UncontrolledClassForm";
 import { SimpleSubjectForm } from "./SimpleSubjectForm";
 import { Plus } from "lucide-react";
 
@@ -119,7 +119,7 @@ export function TestFormsPage() {
           <DialogHeader>
             <DialogTitle>Create New Class</DialogTitle>
           </DialogHeader>
-          <SimpleClassForm
+          <UncontrolledClassForm
             onClose={() => setIsClassDialogOpen(false)}
             onSuccess={handleClassSuccess}
             teachers={mockTeachers}
