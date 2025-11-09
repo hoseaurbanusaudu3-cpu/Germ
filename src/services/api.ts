@@ -35,11 +35,18 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
+    console.error('API Error:', error.response?.status, error.response?.data);
+    
     if (error.response?.status === 401) {
       // Unauthorized - clear token and redirect to login
+      console.log('401 Unauthorized - clearing token and redirecting to login');
       localStorage.removeItem('authToken');
       localStorage.removeItem('currentUser');
-      window.location.href = '/login';
+      
+      // Only redirect if not already on login page
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -61,10 +68,16 @@ export const handleApiError = (error: any): string => {
 
 export const authAPI = {
   login: async (credentials: { username: string; password: string; role: string }) => {
+    console.log('Attempting login with:', { username: credentials.username, role: credentials.role });
     const response = await apiClient.post('/auth/login', credentials);
+    console.log('Login response:', response.data);
+    
     if (response.data.token) {
+      console.log('Storing token and user in localStorage');
       localStorage.setItem('authToken', response.data.token);
       localStorage.setItem('currentUser', JSON.stringify(response.data.user));
+    } else {
+      console.error('No token in response!');
     }
     return response.data;
   },
