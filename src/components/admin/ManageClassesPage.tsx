@@ -19,8 +19,7 @@ import {
 import { Badge } from "../ui/badge";
 import { Plus, Search, Edit, Users, BookOpen } from "lucide-react";
 import { toast } from "sonner";
-import { useSchool } from "../../contexts/SchoolContext";
-import { Class, Teacher } from "../../types/types";
+import { useSchool, Class, Teacher } from "../../contexts/SchoolContext";
 
 const ManageClassesPage = () => {
   const { classes, teachers, addClass, updateClass, fetchClasses, fetchTeachers } = useSchool();
