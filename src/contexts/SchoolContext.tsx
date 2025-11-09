@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { classesAPI, subjectsAPI } from '../services/api';
 
 // ==================== INTERFACES ====================
 
@@ -323,6 +324,7 @@ interface SchoolContextType {
   updateTeacher: (id: number, teacher: Partial<Teacher>) => void;
   deleteTeacher: (id: number) => void;
   getTeacherAssignments: (teacherId: number) => SubjectAssignment[];
+  fetchTeachers: () => Promise<void>;
 
   // Parent Methods
   addParent: (parent: Omit<Parent, 'id'>) => number;
@@ -336,9 +338,10 @@ interface SchoolContextType {
   deleteAccountant: (id: number) => void;
 
   // Class Methods
-  addClass: (cls: Omit<Class, 'id'>) => void;
-  updateClass: (id: number, cls: Partial<Class>) => void;
+  addClass: (cls: Omit<Class, 'id'>) => Promise<void>;
+  updateClass: (id: number, cls: Partial<Class>) => Promise<void>;
   deleteClass: (id: number) => void;
+  fetchClasses: () => Promise<void>;
 
   // Subject Methods
   addSubject: (subject: Omit<Subject, 'id'>) => void;
@@ -576,6 +579,12 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
     return subjectAssignments.filter(a => a.teacherId === teacherId);
   };
 
+  const fetchTeachers = async () => {
+    // TODO: Implement when teachers API is available
+    // For now, teachers are managed locally
+    console.log('fetchTeachers: Using local state');
+  };
+
   // Parent Methods
   const addParent = (parent: Omit<Parent, 'id'>) => {
     const newId = parents.length > 0 ? Math.max(...parents.map(p => p.id)) + 1 : 1;
@@ -631,14 +640,41 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
     return students.filter(s => parent.studentIds.includes(s.id));
   };
 
-  // Class Methods
-  const addClass = (cls: Omit<Class, 'id'>) => {
-    const newClass = { ...cls, id: classes.length + 1 };
-    setClasses([...classes, newClass]);
+  // Fetch Classes from API
+  const fetchClasses = async () => {
+    try {
+      const response = await classesAPI.getAll();
+      if (response.success && response.data) {
+        setClasses(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching classes:', error);
+    }
   };
 
-  const updateClass = (id: number, cls: Partial<Class>) => {
-    setClasses(classes.map(c => (c.id === id ? { ...c, ...cls } : c)));
+  // Class Methods
+  const addClass = async (cls: Omit<Class, 'id'>) => {
+    try {
+      const response = await classesAPI.create(cls);
+      if (response.success) {
+        await fetchClasses(); // Refresh the list
+      }
+    } catch (error) {
+      console.error('Error adding class:', error);
+      throw error;
+    }
+  };
+
+  const updateClass = async (id: number, cls: Partial<Class>) => {
+    try {
+      const response = await classesAPI.update(id, cls);
+      if (response.success) {
+        await fetchClasses(); // Refresh the list
+      }
+    } catch (error) {
+      console.error('Error updating class:', error);
+      throw error;
+    }
   };
 
   const deleteClass = (id: number) => {
@@ -1228,6 +1264,7 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
     updateTeacher,
     deleteTeacher,
     getTeacherAssignments,
+    fetchTeachers,
     addParent,
     updateParent,
     deleteParent,
@@ -1238,6 +1275,7 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
     addClass,
     updateClass,
     deleteClass,
+    fetchClasses,
     addSubject,
     updateSubject,
     deleteSubject,

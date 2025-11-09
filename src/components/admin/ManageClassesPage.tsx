@@ -22,7 +22,7 @@ import { toast } from "sonner";
 import { useSchool, Class, Teacher } from "../../contexts/SchoolContext";
 
 const ManageClassesPage = () => {
-  const { classes, teachers, addClass, updateClass } = useSchool();
+  const { classes, teachers, addClass, updateClass, fetchClasses, fetchTeachers } = useSchool();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentClass, setCurrentClass] = useState<Class | null>(null);
@@ -35,6 +35,11 @@ const ManageClassesPage = () => {
     status: "Active",
   });
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    fetchClasses();
+    fetchTeachers();
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -54,7 +59,7 @@ const ManageClassesPage = () => {
       name: classItem.name,
       level: classItem.level,
       section: classItem.section,
-      classTeacherId: classItem.classTeacherId,
+      classTeacherId: classItem.classTeacherId || undefined,
       capacity: classItem.capacity,
       status: classItem.status,
     });
@@ -85,16 +90,22 @@ const ManageClassesPage = () => {
     e.preventDefault();
     try {
       const classData = {
-        ...formData,
+        name: formData.name,
+        level: formData.level,
+        section: formData.section,
         capacity: Number(formData.capacity),
-        classTeacherId: formData.classTeacherId ? Number(formData.classTeacherId) : undefined,
+        currentStudents: 0,
+        classTeacherId: formData.classTeacherId ? Number(formData.classTeacherId) : null,
+        classTeacher: formData.classTeacherId ? teachers.find(t => t.id === Number(formData.classTeacherId))?.firstName + ' ' + teachers.find(t => t.id === Number(formData.classTeacherId))?.lastName || '' : '',
+        academicYear: '2024/2025',
+        status: formData.status as 'Active' | 'Inactive',
       };
 
       if (isEditing && currentClass) {
-        updateClass(currentClass.id, classData);
+        await updateClass(currentClass.id, classData);
         toast.success("Class updated successfully");
       } else {
-        addClass(classData);
+        await addClass(classData);
         toast.success("Class added successfully");
       }
       setIsFormOpen(false);
