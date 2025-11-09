@@ -6,10 +6,11 @@ import { TeacherDashboard } from "./components/TeacherDashboard";
 import { AccountantDashboard } from "./components/AccountantDashboard";
 import { ParentDashboard } from "./components/ParentDashboard";
 import { ResultReportCard } from "./components/ResultReportCard";
+import { TestFormsPage } from "./components/admin/TestFormsPage";
 import { Toaster } from "./components/ui/sonner";
 import { SchoolProvider } from "./contexts/SchoolContext";
 
-type Page = "landing" | "login" | "dashboard" | "report-card";
+type Page = "landing" | "login" | "dashboard" | "report-card" | "test-forms";
 type Role = "" | "admin" | "teacher" | "accountant" | "parent";
 
 export default function App() {
@@ -128,6 +129,10 @@ export default function App() {
 
         {currentPage === "report-card" && (
           <ResultReportCard onClose={handleCloseReportCard} />
+        )}
+
+        {currentPage === "test-forms" && (
+          <TestFormsPage />
         )}
 
         <Toaster />
