@@ -16,7 +16,11 @@ import { toast } from "sonner@2.0.3";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { useSchool, Class } from "../../contexts/SchoolContext";
 
-function ManageClassesPageComponent() {
+interface ManageClassesPageProps {
+  onNavigateToCreate?: () => void;
+}
+
+function ManageClassesPageComponent({ onNavigateToCreate }: ManageClassesPageProps) {
   const { teachers, students, classes, addClass, updateClass, deleteClass } = useSchool();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterLevel, setFilterLevel] = useState("All");
@@ -412,10 +416,7 @@ function ManageClassesPageComponent() {
 
           <div className="mt-4 flex justify-end">
             <Button
-              onClick={() => {
-                resetForm();
-                setIsCreateDialogOpen(true);
-              }}
+              onClick={() => onNavigateToCreate ? onNavigateToCreate() : setIsCreateDialogOpen(true)}
               className="bg-[#10B981] hover:bg-[#059669] text-white rounded-lg shadow-clinical hover:shadow-clinical-lg transition-all"
             >
               <Plus className="w-4 h-4 mr-2" />

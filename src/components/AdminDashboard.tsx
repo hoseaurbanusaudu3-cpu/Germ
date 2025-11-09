@@ -61,7 +61,6 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     
     // Academic Management
     { icon: <BookOpen className="w-5 h-5" />, label: "Manage Classes", id: "manage-classes" },
-    { icon: <Plus className="w-5 h-5" />, label: "Create Class", id: "create-class" },
     { icon: <List className="w-5 h-5" />, label: "Manage Subjects", id: "manage-subjects" },
     { icon: <Award className="w-5 h-5" />, label: "Teacher Assignments", id: "teacher-assignments" },
     { icon: <BarChart3 className="w-5 h-5" />, label: "Promotion System", id: "promotion-system" },
@@ -269,7 +268,9 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           {activeItem === "manage-students" && <ManageStudentsPage onNavigateToLink={() => setActiveItem("link-student-parent")} />}
           {activeItem === "manage-teachers" && <ManageTeachersPage />}
           {activeItem === "manage-parents" && <ManageParentsPage onNavigateToLink={() => setActiveItem("link-student-parent")} />}
-          {activeItem === "manage-classes" && <ManageClassesPage />}
+          {activeItem === "manage-classes" && (
+            <ManageClassesPage onNavigateToCreate={() => setActiveItem("create-class")} />
+          )}
           {activeItem === "create-class" && (
             <CreateClassPage 
               onBack={() => setActiveItem("manage-classes")}
