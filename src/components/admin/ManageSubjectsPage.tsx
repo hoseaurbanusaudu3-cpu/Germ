@@ -315,10 +315,13 @@ export function ManageSubjectsPage() {
             <div className="space-y-2">
               <Label className="text-white">Subject Name *</Label>
               <Input
-                key="subject-name-input"
                 placeholder="e.g., Mathematics, English"
                 value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  setFormData(prev => ({ ...prev, name: e.target.value }));
+                }}
+                onFocus={(e) => e.stopPropagation()}
                 className="h-12 rounded-xl border border-white/10 bg-[#0F243E] text-white"
               />
             </div>
@@ -326,10 +329,13 @@ export function ManageSubjectsPage() {
             <div className="space-y-2">
               <Label className="text-white">Subject Code *</Label>
               <Input
-                key="subject-code-input"
                 placeholder="e.g., MTH101"
                 value={formData.code}
-                onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  setFormData(prev => ({ ...prev, code: e.target.value.toUpperCase() }));
+                }}
+                onFocus={(e) => e.stopPropagation()}
                 className="h-12 rounded-xl border border-white/10 bg-[#0F243E] text-white"
               />
             </div>
@@ -481,10 +487,13 @@ export function ManageSubjectsPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#C0C8D3]" />
                 <Input
-                  key="subject-search-input"
                   placeholder="Search by name or code..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    setSearchQuery(e.target.value);
+                  }}
+                  onFocus={(e) => e.stopPropagation()}
                   className="h-12 pl-11 rounded-xl border border-white/10 bg-[#0F243E] text-white"
                 />
               </div>

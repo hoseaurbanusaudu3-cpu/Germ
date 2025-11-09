@@ -183,10 +183,13 @@ export function ManageClassesPage() {
             <div className="space-y-2">
               <Label className="text-[#1F2937]">Class Name *</Label>
               <Input
-                key="class-name-input"
                 placeholder="e.g., JSS 1A, SS 2B, Primary 3"
                 value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  setFormData(prev => ({ ...prev, name: e.target.value }));
+                }}
+                onFocus={(e) => e.stopPropagation()}
                 className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
               />
             </div>
@@ -196,10 +199,13 @@ export function ManageClassesPage() {
             <div className="space-y-2">
               <Label className="text-[#1F2937]">Section (Optional)</Label>
               <Input
-                key="section-input"
                 placeholder="e.g., A, B, C"
                 value={formData.section}
-                onChange={(e) => setFormData(prev => ({ ...prev, section: e.target.value }))}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  setFormData(prev => ({ ...prev, section: e.target.value }));
+                }}
+                onFocus={(e) => e.stopPropagation()}
                 className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
               />
             </div>
@@ -207,11 +213,14 @@ export function ManageClassesPage() {
             <div className="space-y-2">
               <Label className="text-[#1F2937]">Class Capacity *</Label>
               <Input
-                key="capacity-input"
                 type="number"
                 placeholder="e.g., 35"
                 value={formData.capacity}
-                onChange={(e) => setFormData(prev => ({ ...prev, capacity: e.target.value }))}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  setFormData(prev => ({ ...prev, capacity: e.target.value }));
+                }}
+                onFocus={(e) => e.stopPropagation()}
                 className="h-12 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
               />
             </div>
@@ -360,10 +369,13 @@ export function ManageClassesPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#6B7280]" />
                 <Input
-                  key="search-input"
                   placeholder="Search by class name or teacher..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    setSearchQuery(e.target.value);
+                  }}
+                  onFocus={(e) => e.stopPropagation()}
                   className="h-12 pl-11 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] text-[#1F2937]"
                 />
               </div>
