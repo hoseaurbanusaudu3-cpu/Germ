@@ -488,6 +488,25 @@ export function SchoolProvider({ children }: { children: ReactNode }) {
     { id: 1, username: 'admin', password: 'admin123', role: 'admin', linkedId: 0, email: 'admin@gra.edu.ng', status: 'Active' },
   ]);
 
+  // Fetch data from API on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        console.log('Fetching data from API...');
+        await Promise.all([
+          fetchClasses(),
+          fetchSubjects(),
+          fetchStudents(),
+        ]);
+        console.log('Data fetched successfully');
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, []); // Empty dependency array = run once on mount
+
   // Helper function to calculate grade
   const calculateGrade = (total: number): string => {
     if (total >= 80) return 'A';
