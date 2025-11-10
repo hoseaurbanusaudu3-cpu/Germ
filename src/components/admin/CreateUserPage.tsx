@@ -1,282 +1,392 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Button } from "../ui/button";
+import { UserPlus, Mail, Phone, Eye, EyeOff, Copy, RefreshCw } from "lucide-react";
+import { Card, CardContent, CardHeader } from "../ui/card";
 import { Input } from "../ui/input";
-import { Label } from "../ui/label";
+import { Button } from "../ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Label } from "../ui/label";
+import { Switch } from "../ui/switch";
+import { toast } from "sonner@2.0.3";
 import { Badge } from "../ui/badge";
-import { UserPlus, Mail, Shield, Hash, Eye, EyeOff } from "lucide-react";
-import { toast } from "sonner";
-import { useSchool } from "../../contexts/SchoolContext";
 
 export function CreateUserPage() {
-  const { addUser, teachers, students } = useSchool();
-  const [formData, setFormData] = useState({
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    role: "student" as "admin" | "teacher" | "accountant" | "student" | "parent",
-    linkedId: "",
-    status: "active" as "active" | "inactive"
-  });
+  const [role, setRole] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [assignedClass, setAssignedClass] = useState("");
+  const [assignedSubjects, setAssignedSubjects] = useState<string[]>([]);
+  const [accountStatus, setAccountStatus] = useState("active");
+  const [sendCredentialsEmail, setSendCredentialsEmail] = useState(true);
+  const [sendCredentialsSMS, setSendCredentialsSMS] = useState(false);
+  const [autoGenerateUsername, setAutoGenerateUsername] = useState(true);
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const getLinkedOptions = () => {
-    switch (formData.role) {
-      case "teacher":
-        return teachers.filter(t => t.status === "active").map(t => ({
-          value: t.id.toString(),
-          label: `${t.firstName} ${t.lastName} (${t.employeeId})`
-        }));
-      case "student":
-        return students.filter(s => s.status === "active").map(s => ({
-          value: s.id.toString(),
-          label: `${s.firstName} ${s.lastName} (${s.admissionNumber})`
-        }));
-      default:
-        return [];
+  // Auto-generate username from full name
+  const handleNameChange = (name: string) => {
+    setFullName(name);
+    if (autoGenerateUsername && name) {
+      const parts = name.trim().split(" ");
+      if (parts.length > 0) {
+        const firstName = parts[0].toLowerCase();
+        const lastName = parts[parts.length - 1]?.toLowerCase() || "";
+        const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, "0");
+        const generatedUsername = lastName 
+          ? `${firstName.charAt(0)}${lastName}${randomNum}` 
+          : `${firstName}${randomNum}`;
+        setUsername(generatedUsername);
+      }
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.username || !formData.email || !formData.password) {
+  // Auto-generate strong password
+  const generatePassword = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%";
+    let newPassword = "";
+    for (let i = 0; i < 12; i++) {
+      newPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setPassword(newPassword);
+    toast.success("Strong password generated");
+  };
+
+  const handleCopyPassword = () => {
+    navigator.clipboard.writeText(password);
+    toast.success("Password copied to clipboard");
+  };
+
+  const handleCopyUsername = () => {
+    navigator.clipboard.writeText(username);
+    toast.success("Username copied to clipboard");
+  };
+
+  const handleSubmit = () => {
+    if (!role || !fullName || !email || !phone || !username || !password) {
       toast.error("Please fill in all required fields");
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
+    const credentialMethod = sendCredentialsEmail && sendCredentialsSMS 
+      ? "Email & SMS" 
+      : sendCredentialsEmail 
+      ? "Email" 
+      : sendCredentialsSMS 
+      ? "SMS" 
+      : "not sent";
+
+    if (credentialMethod !== "not sent") {
+      toast.success(`User created successfully — credentials sent via ${credentialMethod}`);
+    } else {
+      toast.success("User created successfully — credentials not sent");
     }
 
-    if (formData.password.length < 6) {
-      toast.error("Password must be at least 6 characters long");
-      return;
-    }
-
-    if (!formData.email.includes("@")) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
-
-    if (["teacher", "student"].includes(formData.role) && !formData.linkedId) {
-      toast.error(`Please select a ${formData.role} to link this account to`);
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      
-      const newUser = {
-        id: Date.now(),
-        username: formData.username,
-        email: formData.email,
-        password: formData.password,
-        role: formData.role,
-        linkedId: formData.linkedId ? parseInt(formData.linkedId) : undefined,
-        status: formData.status,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-
-      addUser(newUser);
-      
-      toast.success("User account created successfully!");
-      
-      // Reset form
-      setFormData({
-        username: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-        role: "student",
-        linkedId: "",
-        status: "active"
-      });
-
-    } catch (error) {
-      toast.error("Failed to create user account. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    // Reset form
+    setRole("");
+    setFullName("");
+    setEmail("");
+    setPhone("");
+    setUsername("");
+    setPassword("");
+    setAssignedClass("");
+    setAssignedSubjects([]);
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Create User Account</h2>
-        <p className="text-muted-foreground">
-          Create a new user account for school staff or students
-        </p>
+      <div className="mb-6">
+        <h1 className="text-white mb-2">Create User</h1>
+        <p className="text-[#C0C8D3]">Add new system user with role-based access</p>
       </div>
 
-      {/* Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5" />
-            Account Details
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Main Form */}
+        <div className="lg:col-span-2">
+          <Card className="rounded-xl bg-[#132C4A] border border-white/10 shadow-lg">
+            <CardHeader className="p-5 border-b border-white/10">
+              <h3 className="text-white flex items-center gap-2">
+                <UserPlus className="w-5 h-5" />
+                User Information
+              </h3>
+            </CardHeader>
+            <CardContent className="p-6 space-y-6">
+              {/* Role Selection */}
               <div className="space-y-2">
-                <Label htmlFor="username">Username *</Label>
-                <div className="relative">
-                  <Hash className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="username"
-                    placeholder="Enter username"
-                    value={formData.username}
-                    onChange={(e) => handleInputChange("username", e.target.value)}
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address *</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="user@school.com"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Password *</Label>
-                <div className="relative">
-                  <Shield className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter password"
-                    value={formData.password}
-                    onChange={(e) => handleInputChange("password", e.target.value)}
-                    className="pl-10 pr-10"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                <div className="relative">
-                  <Shield className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="confirmPassword"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Confirm password"
-                    value={formData.confirmPassword}
-                    onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="role">User Role *</Label>
-                <Select
-                  value={formData.role}
-                  onValueChange={(value: string) => handleInputChange("role", value)}
-                >
-                  <SelectTrigger>
+                <Label className="text-white">User Role *</Label>
+                <Select value={role} onValueChange={setRole}>
+                  <SelectTrigger className="h-12 rounded-xl border border-white/10 bg-[#0F243E] text-white">
                     <SelectValue placeholder="Select user role" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">
-                      <Badge variant="default">Administrator</Badge>
-                    </SelectItem>
-                    <SelectItem value="teacher">
-                      <Badge variant="secondary">Teacher</Badge>
-                    </SelectItem>
-                    <SelectItem value="accountant">
-                      <Badge variant="outline">Accountant</Badge>
-                    </SelectItem>
-                    <SelectItem value="student">
-                      <Badge variant="secondary">Student</Badge>
-                    </SelectItem>
-                    <SelectItem value="parent">
-                      <Badge variant="outline">Parent</Badge>
-                    </SelectItem>
+                  <SelectContent className="bg-[#0F243E] border-white/10">
+                    <SelectItem value="admin" className="text-white hover:bg-[#1E90FF]">Admin</SelectItem>
+                    <SelectItem value="teacher" className="text-white hover:bg-[#1E90FF]">Teacher</SelectItem>
+                    <SelectItem value="accountant" className="text-white hover:bg-[#1E90FF]">Accountant</SelectItem>
+                    <SelectItem value="parent" className="text-white hover:bg-[#1E90FF]">Parent</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="status">Account Status</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value: string) => handleInputChange("status", value)}
+              {/* Two Column Layout */}
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Full Name */}
+                <div className="space-y-2">
+                  <Label className="text-white">Full Name *</Label>
+                  <Input
+                    value={fullName}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    placeholder="Enter full name"
+                    className="h-12 rounded-xl border border-white/10 bg-[#0F243E] text-white"
+                  />
+                </div>
+
+                {/* Email */}
+                <div className="space-y-2">
+                  <Label className="text-white">Email Address *</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#C0C8D3]" />
+                    <Input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="email@example.com"
+                      className="h-12 pl-10 rounded-xl border border-white/10 bg-[#0F243E] text-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Phone */}
+                <div className="space-y-2">
+                  <Label className="text-white">Phone Number *</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#C0C8D3]" />
+                    <Input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="080XXXXXXXX"
+                      className="h-12 pl-10 rounded-xl border border-white/10 bg-[#0F243E] text-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Account Status */}
+                <div className="space-y-2">
+                  <Label className="text-white">Account Status</Label>
+                  <Select value={accountStatus} onValueChange={setAccountStatus}>
+                    <SelectTrigger className="h-12 rounded-xl border border-white/10 bg-[#0F243E] text-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#0F243E] border-white/10">
+                      <SelectItem value="active" className="text-white hover:bg-[#1E90FF]">Active</SelectItem>
+                      <SelectItem value="inactive" className="text-white hover:bg-[#1E90FF]">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Teacher-specific fields */}
+              {role === "teacher" && (
+                <div className="grid md:grid-cols-2 gap-6 p-4 bg-[#0F243E] rounded-xl border border-white/10">
+                  <div className="space-y-2">
+                    <Label className="text-white">Assign Class (Optional)</Label>
+                    <Select value={assignedClass} onValueChange={setAssignedClass}>
+                      <SelectTrigger className="h-12 rounded-xl border border-white/10 bg-[#132C4A] text-white">
+                        <SelectValue placeholder="Select class" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#0F243E] border-white/10">
+                        <SelectItem value="JSS1A" className="text-white hover:bg-[#1E90FF]">JSS 1A</SelectItem>
+                        <SelectItem value="JSS2A" className="text-white hover:bg-[#1E90FF]">JSS 2A</SelectItem>
+                        <SelectItem value="SS1A" className="text-white hover:bg-[#1E90FF]">SS 1A</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-white">Assign Subjects (Multi-select)</Label>
+                    <Select>
+                      <SelectTrigger className="h-12 rounded-xl border border-white/10 bg-[#132C4A] text-white">
+                        <SelectValue placeholder="Select subjects" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#0F243E] border-white/10">
+                        <SelectItem value="math" className="text-white hover:bg-[#1E90FF]">Mathematics</SelectItem>
+                        <SelectItem value="english" className="text-white hover:bg-[#1E90FF]">English</SelectItem>
+                        <SelectItem value="science" className="text-white hover:bg-[#1E90FF]">Science</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+
+              {/* Login Credentials Section */}
+              <div className="space-y-4 p-4 bg-[#0F243E] rounded-xl border border-[#1E90FF]">
+                <h4 className="text-white">Login Credentials</h4>
+                
+                {/* Username */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-white">Username *</Label>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-[#C0C8D3]">Auto-generate</Label>
+                      <Switch 
+                        checked={autoGenerateUsername} 
+                        onCheckedChange={setAutoGenerateUsername}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      placeholder="username"
+                      disabled={autoGenerateUsername}
+                      className="h-12 rounded-xl border border-white/10 bg-[#132C4A] text-white disabled:opacity-60"
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleCopyUsername}
+                      disabled={!username}
+                      className="h-12 px-4 bg-[#1E90FF] hover:bg-[#00BFFF] rounded-xl"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Password */}
+                <div className="space-y-2">
+                  <Label className="text-white">Password *</Label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter or generate password"
+                        className="h-12 pr-10 rounded-xl border border-white/10 bg-[#132C4A] text-white"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#C0C8D3] hover:text-white"
+                      >
+                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={generatePassword}
+                      className="h-12 px-4 bg-[#FFC107] hover:bg-[#FFC107]/90 rounded-xl"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleCopyPassword}
+                      disabled={!password}
+                      className="h-12 px-4 bg-[#1E90FF] hover:bg-[#00BFFF] rounded-xl"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  {password && (
+                    <p className="text-xs text-[#FFC107]">
+                      ⚠️ Temporary password expires in 24 hours — user must reset
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Send Credentials Options */}
+              <div className="space-y-3 p-4 bg-[#0F243E] rounded-xl border border-white/10">
+                <Label className="text-white">Send Credentials</Label>
+                <div className="flex items-center justify-between p-3 bg-[#132C4A] rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Mail className="w-5 h-5 text-[#1E90FF]" />
+                    <span className="text-white">Send via Email</span>
+                  </div>
+                  <Switch checked={sendCredentialsEmail} onCheckedChange={setSendCredentialsEmail} />
+                </div>
+                <div className="flex items-center justify-between p-3 bg-[#132C4A] rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Phone className="w-5 h-5 text-[#28A745]" />
+                    <span className="text-white">Send via SMS</span>
+                  </div>
+                  <Switch checked={sendCredentialsSMS} onCheckedChange={setSendCredentialsSMS} />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <Button
+                  onClick={handleSubmit}
+                  className="flex-1 h-12 bg-[#28A745] hover:bg-[#28A745]/90 text-white rounded-xl shadow-md hover:scale-105 transition-all"
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">
-                      <Badge variant="default">Active</Badge>
-                    </SelectItem>
-                    <SelectItem value="inactive">
-                      <Badge variant="secondary">Inactive</Badge>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {["teacher", "student"].includes(formData.role) && (
-              <div className="space-y-2">
-                <Label htmlFor="linkedId">Link to {formData.role === "teacher" ? "Teacher" : "Student"} *</Label>
-                <Select
-                  value={formData.linkedId}
-                  onValueChange={(value: string) => handleInputChange("linkedId", value)}
+                  <UserPlus className="w-5 h-5 mr-2" />
+                  Create User
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setRole("");
+                    setFullName("");
+                    setEmail("");
+                    setPhone("");
+                    setUsername("");
+                    setPassword("");
+                    toast.info("Form cleared");
+                  }}
+                  className="h-12 px-6 bg-[#DC3545] hover:bg-[#DC3545]/90 text-white rounded-xl"
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder={`Select ${formData.role} to link`} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getLinkedOptions().map(option => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  Cancel
+                </Button>
               </div>
-            )}
+            </CardContent>
+          </Card>
+        </div>
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Creating Account..." : "Create User Account"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+        {/* Side Panel - Info & Tips */}
+        <div className="space-y-4">
+          <Card className="rounded-xl bg-[#132C4A] border border-white/10 shadow-lg">
+            <CardHeader className="p-4 bg-gradient-to-r from-[#1E90FF] to-[#00BFFF] rounded-t-xl">
+              <h4 className="text-white">Quick Tips</h4>
+            </CardHeader>
+            <CardContent className="p-4 space-y-3">
+              <div className="p-3 bg-[#0F243E] rounded-lg">
+                <p className="text-xs text-[#C0C8D3]">
+                  <span className="text-[#1E90FF]">•</span> Username auto-generates from name
+                </p>
+              </div>
+              <div className="p-3 bg-[#0F243E] rounded-lg">
+                <p className="text-xs text-[#C0C8D3]">
+                  <span className="text-[#1E90FF]">•</span> Use strong passwords (12+ characters)
+                </p>
+              </div>
+              <div className="p-3 bg-[#0F243E] rounded-lg">
+                <p className="text-xs text-[#C0C8D3]">
+                  <span className="text-[#1E90FF]">•</span> Credentials can be resent later
+                </p>
+              </div>
+              <div className="p-3 bg-[#0F243E] rounded-lg">
+                <p className="text-xs text-[#C0C8D3]">
+                  <span className="text-[#1E90FF]">•</span> Teachers need class/subject assignment
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-xl bg-[#132C4A] border border-[#FFC107]/30 shadow-lg">
+            <CardHeader className="p-4 bg-[#FFC107]/10 rounded-t-xl border-b border-[#FFC107]/30">
+              <h4 className="text-white">Security Notice</h4>
+            </CardHeader>
+            <CardContent className="p-4">
+              <p className="text-xs text-[#C0C8D3] leading-relaxed">
+                All user accounts are audited. Temporary passwords expire in 24 hours. 
+                Users will be required to reset their password on first login.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

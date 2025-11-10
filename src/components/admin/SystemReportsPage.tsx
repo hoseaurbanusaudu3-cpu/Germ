@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader } from "../ui/card";
 import { Button } from "../ui/button";
 import { useSchool } from "../../contexts/SchoolContext";
 import { BarChart3, Download, TrendingUp, Users, GraduationCap, DollarSign, FileText, CheckCircle } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "sonner@2.0.3";
 
 export function SystemReportsPage() {
   const { students, teachers, classes, payments, compiledResults, subjects } = useSchool();

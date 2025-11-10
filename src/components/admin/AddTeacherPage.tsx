@@ -1,76 +1,91 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Button } from "../ui/button";
+import { User, Upload, Save } from "lucide-react";
+import { Card, CardContent } from "../ui/card";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { Button } from "../ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { Badge } from "../ui/badge";
-import { UserPlus, Mail, Phone, MapPin, DollarSign, Hash, Calendar } from "lucide-react";
-import { toast } from "sonner";
+import { Checkbox } from "../ui/checkbox";
+import { toast } from "sonner@2.0.3";
 import { useSchool } from "../../contexts/SchoolContext";
 
 export function AddTeacherPage() {
-  const { addTeacher } = useSchool();
+  const { addTeacher, addUser, classes } = useSchool();
+  
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     phone: "",
-    address: "",
-    employeeId: "",
-    subjectId: "",
-    department: "academic",
-    salary: "",
-    hireDate: new Date().toISOString().split('T')[0],
+    specialization: [] as string[],
     qualification: "",
-    experience: "",
-    status: "active" as "active" | "inactive"
+    employeeId: "",
+    isClassTeacher: false,
+    classTeacherId: null as number | null,
+    username: "",
+    password: "",
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const [selectedSpecialization, setSelectedSpecialization] = useState("");
+
+  const addSpecialization = () => {
+    if (selectedSpecialization && !formData.specialization.includes(selectedSpecialization)) {
+      setFormData({
+        ...formData,
+        specialization: [...formData.specialization, selectedSpecialization]
+      });
+      setSelectedSpecialization("");
+    }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const removeSpecialization = (spec: string) => {
+    setFormData({
+      ...formData,
+      specialization: formData.specialization.filter(s => s !== spec)
+    });
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.employeeId) {
-      toast.error("Please fill in all required fields");
+
+    // Validate specialization
+    if (formData.specialization.length === 0) {
+      toast.error("Please add at least one subject specialization");
       return;
     }
 
-    if (!formData.email.includes("@")) {
-      toast.error("Please enter a valid email address");
+    // Validate class teacher assignment
+    if (formData.isClassTeacher && !formData.classTeacherId) {
+      toast.error("Please select a class for the class teacher assignment");
       return;
     }
 
     try {
-      setIsSubmitting(true);
-      
-      const newTeacher = {
-        id: Date.now(),
+      // Add teacher
+      const teacherId = addTeacher({
         firstName: formData.firstName,
         lastName: formData.lastName,
+        employeeId: formData.employeeId,
         email: formData.email,
         phone: formData.phone,
-        address: formData.address,
-        employeeId: formData.employeeId,
-        subjectId: formData.subjectId,
-        department: formData.department,
-        salary: parseFloat(formData.salary) || 0,
-        hireDate: formData.hireDate,
         qualification: formData.qualification,
-        experience: formData.experience,
-        status: formData.status,
-        role: "teacher" as const,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
+        specialization: formData.specialization,
+        status: 'Active',
+        isClassTeacher: formData.isClassTeacher,
+        classTeacherId: formData.classTeacherId,
+      });
 
-      addTeacher(newTeacher);
-      
-      toast.success("Teacher added successfully!");
+      // Create user account
+      addUser({
+        username: formData.username,
+        password: formData.password,
+        role: 'teacher',
+        linkedId: teacherId,
+        email: formData.email,
+        status: 'Active',
+      });
+
+      toast.success(`Teacher ${formData.firstName} ${formData.lastName} added successfully!`);
       
       // Reset form
       setFormData({
@@ -78,246 +93,247 @@ export function AddTeacherPage() {
         lastName: "",
         email: "",
         phone: "",
-        address: "",
-        employeeId: "",
-        subjectId: "",
-        department: "academic",
-        salary: "",
-        hireDate: new Date().toISOString().split('T')[0],
+        specialization: [],
         qualification: "",
-        experience: "",
-        status: "active"
+        employeeId: "",
+        isClassTeacher: false,
+        classTeacherId: null,
+        username: "",
+        password: "",
       });
-
     } catch (error) {
       toast.error("Failed to add teacher. Please try again.");
-    } finally {
-      setIsSubmitting(false);
+      console.error(error);
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Add Teacher</h2>
-        <p className="text-muted-foreground">
-          Add a new teacher to the school system
-        </p>
+      <div className="mb-6">
+        <h1 className="text-2xl text-gray-900 mb-2">Add New Teacher</h1>
+        <p className="text-gray-600">Register a new teaching staff member with login credentials</p>
       </div>
 
-      {/* Form */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5" />
-            Teacher Information
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Card className="rounded-xl bg-white border border-gray-200 shadow-sm max-w-4xl">
+        <CardContent className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Personal Information */}
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name *</Label>
-                <Input
-                  id="firstName"
-                  placeholder="Enter first name"
-                  value={formData.firstName}
-                  onChange={(e) => handleInputChange("firstName", e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name *</Label>
-                <Input
-                  id="lastName"
-                  placeholder="Enter last name"
-                  value={formData.lastName}
-                  onChange={(e) => handleInputChange("lastName", e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address *</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="teacher@school.com"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="phone"
-                    placeholder="+234 801 234 5678"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange("phone", e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="employeeId">Employee ID *</Label>
-                <div className="relative">
-                  <Hash className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="employeeId"
-                    placeholder="TCH001"
-                    value={formData.employeeId}
-                    onChange={(e) => handleInputChange("employeeId", e.target.value)}
-                    className="pl-10"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="subjectId">Subject Specialization</Label>
-                <Select
-                  value={formData.subjectId}
-                  onValueChange={(value: string) => handleInputChange("subjectId", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select subject" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="mathematics">Mathematics</SelectItem>
-                    <SelectItem value="english">English</SelectItem>
-                    <SelectItem value="physics">Physics</SelectItem>
-                    <SelectItem value="chemistry">Chemistry</SelectItem>
-                    <SelectItem value="biology">Biology</SelectItem>
-                    <SelectItem value="history">History</SelectItem>
-                    <SelectItem value="geography">Geography</SelectItem>
-                    <SelectItem value="economics">Economics</SelectItem>
-                    <SelectItem value="literature">Literature</SelectItem>
-                    <SelectItem value="computer-science">Computer Science</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="department">Department</Label>
-                <Select
-                  value={formData.department}
-                  onValueChange={(value: string) => handleInputChange("department", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="academic">Academic</SelectItem>
-                    <SelectItem value="science">Science</SelectItem>
-                    <SelectItem value="arts">Arts</SelectItem>
-                    <SelectItem value="commercial">Commercial</SelectItem>
-                    <SelectItem value="technical">Technical</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="salary">Monthly Salary (₦)</Label>
-                <div className="relative">
-                  <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="salary"
-                    type="number"
-                    placeholder="0.00"
-                    value={formData.salary}
-                    onChange={(e) => handleInputChange("salary", e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="hireDate">Hire Date</Label>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="hireDate"
-                    type="date"
-                    value={formData.hireDate}
-                    onChange={(e) => handleInputChange("hireDate", e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="qualification">Qualification</Label>
-                <Input
-                  id="qualification"
-                  placeholder="B.Sc, M.Ed, etc."
-                  value={formData.qualification}
-                  onChange={(e) => handleInputChange("qualification", e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="experience">Years of Experience</Label>
-                <Input
-                  id="experience"
-                  type="number"
-                  placeholder="0"
-                  value={formData.experience}
-                  onChange={(e) => handleInputChange("experience", e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="status">Status</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value: string) => handleInputChange("status", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">
-                      <Badge variant="default">Active</Badge>
-                    </SelectItem>
-                    <SelectItem value="inactive">
-                      <Badge variant="secondary">Inactive</Badge>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Address */}
-            <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
+            {/* Photo Upload */}
+            <div className="flex justify-center mb-6">
               <div className="relative">
-                <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-[#3B82F6] to-[#2563EB] flex items-center justify-center border-4 border-gray-200">
+                  <User className="w-16 h-16 text-white" />
+                </div>
+                <button
+                  type="button"
+                  className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-[#10B981] flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+                >
+                  <Upload className="w-5 h-5 text-white" />
+                </button>
+              </div>
+            </div>
+
+            {/* Personal Information */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-gray-700">First Name *</Label>
                 <Input
-                  id="address"
-                  placeholder="Enter home address"
-                  value={formData.address}
-                  onChange={(e) => handleInputChange("address", e.target.value)}
-                  className="pl-10"
+                  required
+                  value={formData.firstName}
+                  onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                  placeholder="Enter first name"
+                  className="h-12 rounded-xl border border-gray-300 bg-white text-gray-900"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-700">Last Name *</Label>
+                <Input
+                  required
+                  value={formData.lastName}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  placeholder="Enter last name"
+                  className="h-12 rounded-xl border border-gray-300 bg-white text-gray-900"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-700">Email Address *</Label>
+                <Input
+                  required
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="teacher@gra.edu.ng"
+                  className="h-12 rounded-xl border border-gray-300 bg-white text-gray-900"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-700">Phone Number *</Label>
+                <Input
+                  required
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="080XXXXXXXX"
+                  className="h-12 rounded-xl border border-gray-300 bg-white text-gray-900"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-700">Qualification *</Label>
+                <Select required value={formData.qualification} onValueChange={(value) => setFormData({ ...formData, qualification: value })}>
+                  <SelectTrigger className="h-12 rounded-xl border border-gray-300 bg-white text-gray-900">
+                    <SelectValue placeholder="Select qualification" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border-gray-200">
+                    <SelectItem value="NCE" className="text-gray-900">NCE</SelectItem>
+                    <SelectItem value="B.Ed" className="text-gray-900">B.Ed</SelectItem>
+                    <SelectItem value="B.Sc" className="text-gray-900">B.Sc</SelectItem>
+                    <SelectItem value="B.A" className="text-gray-900">B.A</SelectItem>
+                    <SelectItem value="M.Ed" className="text-gray-900">M.Ed</SelectItem>
+                    <SelectItem value="M.Sc" className="text-gray-900">M.Sc</SelectItem>
+                    <SelectItem value="PhD" className="text-gray-900">PhD</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-gray-700">Employee ID *</Label>
+                <Input
+                  required
+                  value={formData.employeeId}
+                  onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
+                  placeholder="e.g., GRA/T/001"
+                  className="h-12 rounded-xl border border-gray-300 bg-white text-gray-900"
                 />
               </div>
             </div>
 
-            {/* Submit Button */}
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Adding Teacher..." : "Add Teacher"}
-            </Button>
+            {/* Subject Specialization */}
+            <div className="space-y-2">
+              <Label className="text-gray-700">Subject Specialization *</Label>
+              <div className="flex gap-2">
+                <Select value={selectedSpecialization} onValueChange={setSelectedSpecialization}>
+                  <SelectTrigger className="h-12 rounded-xl border border-gray-300 bg-white text-gray-900 flex-1">
+                    <SelectValue placeholder="Select subject to add" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white border-gray-200">
+                    <SelectItem value="Mathematics" className="text-gray-900">Mathematics</SelectItem>
+                    <SelectItem value="English Language" className="text-gray-900">English Language</SelectItem>
+                    <SelectItem value="Physics" className="text-gray-900">Physics</SelectItem>
+                    <SelectItem value="Chemistry" className="text-gray-900">Chemistry</SelectItem>
+                    <SelectItem value="Biology" className="text-gray-900">Biology</SelectItem>
+                    <SelectItem value="Economics" className="text-gray-900">Economics</SelectItem>
+                    <SelectItem value="Government" className="text-gray-900">Government</SelectItem>
+                    <SelectItem value="Literature" className="text-gray-900">Literature</SelectItem>
+                    <SelectItem value="Further Mathematics" className="text-gray-900">Further Mathematics</SelectItem>
+                    <SelectItem value="Geography" className="text-gray-900">Geography</SelectItem>
+                    <SelectItem value="CRS" className="text-gray-900">CRS</SelectItem>
+                    <SelectItem value="IRS" className="text-gray-900">IRS</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  type="button"
+                  onClick={addSpecialization}
+                  className="h-12 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl px-6"
+                >
+                  Add
+                </Button>
+              </div>
+              {formData.specialization.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {formData.specialization.map((spec) => (
+                    <div
+                      key={spec}
+                      className="bg-blue-50 text-gray-900 px-3 py-1 rounded-lg flex items-center gap-2 border border-blue-200"
+                    >
+                      <span>{spec}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeSpecialization(spec)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Class Teacher Assignment */}
+            <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="classTeacher"
+                  checked={formData.isClassTeacher}
+                  onCheckedChange={(checked) => setFormData({ ...formData, isClassTeacher: checked as boolean, classTeacherId: checked ? formData.classTeacherId : null })}
+                  className="border-gray-300"
+                />
+                <Label htmlFor="classTeacher" className="text-gray-900 cursor-pointer">
+                  Assign as Class Teacher
+                </Label>
+              </div>
+
+              {formData.isClassTeacher && (
+                <div className="space-y-2">
+                  <Label className="text-gray-700">Assigned Class *</Label>
+                  <Select value={formData.classTeacherId?.toString() || ""} onValueChange={(value) => setFormData({ ...formData, classTeacherId: parseInt(value) })}>
+                    <SelectTrigger className="h-12 rounded-xl border border-gray-300 bg-white text-gray-900">
+                      <SelectValue placeholder="Select class" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border-gray-200">
+                      {classes.filter(c => c.status === 'Active').map((cls) => (
+                        <SelectItem key={cls.id} value={cls.id.toString()} className="text-gray-900">
+                          {cls.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            {/* User Account Information */}
+            <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
+              <h3 className="text-gray-900">Login Credentials</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-gray-700">Username *</Label>
+                  <Input
+                    required
+                    value={formData.username}
+                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                    placeholder="Username for login"
+                    className="h-12 rounded-xl border border-gray-300 bg-white text-gray-900"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-gray-700">Password *</Label>
+                  <Input
+                    required
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="Initial password"
+                    className="h-12 rounded-xl border border-gray-300 bg-white text-gray-900"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="submit"
+                className="flex-1 h-12 bg-[#10B981] hover:bg-[#059669] text-white rounded-xl shadow-sm"
+              >
+                <Save className="w-5 h-5 mr-2" />
+                Add Teacher
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>

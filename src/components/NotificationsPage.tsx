@@ -5,7 +5,7 @@ import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { useSchool } from '../contexts/SchoolContext';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 export function NotificationsPage() {
   const { currentUser, getAllNotifications, getUnreadNotifications, markNotificationAsRead } =

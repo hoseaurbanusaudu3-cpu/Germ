@@ -34,6 +34,8 @@ export function ManualPaymentEntryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   // Form state
@@ -56,6 +58,7 @@ export function ManualPaymentEntryPage() {
 
   const loadPaymentHistory = async () => {
     try {
+      setIsLoading(true);
       const response = await paymentsAPI.create({});
       // This will get all payments - you can filter by date or status as needed
       if (response.data) {
@@ -72,7 +75,7 @@ export function ManualPaymentEntryPage() {
           referenceNumber: p.reference,
           bankName: p.bank_name,
           notes: p.description,
-          recordedBy: currentUser?.email || 'Accountant',
+          recordedBy: currentUser?.name || 'Accountant',
           recordedAt: p.created_at
         }));
         setPaymentHistory(formattedPayments);
@@ -80,6 +83,8 @@ export function ManualPaymentEntryPage() {
     } catch (error: any) {
       console.error('Error loading payment history:', error);
       // Don't show error toast on initial load
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -110,6 +115,7 @@ export function ManualPaymentEntryPage() {
     });
     setSelectedStudent(null);
     setIsEditing(false);
+    setEditingId(null);
   };
 
   const handleSubmit = async () => {
@@ -200,7 +206,7 @@ export function ManualPaymentEntryPage() {
     }
   };
 
-  const handleEdit = (payment: any) => {
+  const handleEdit = (payment: PaymentEntry) => {
     setSelectedStudent(students.find(s => s.id === payment.studentId));
     setFormData({
       amount: payment.amount.toString(),
@@ -211,11 +217,12 @@ export function ManualPaymentEntryPage() {
       notes: payment.notes || ""
     });
     setIsEditing(true);
+    setEditingId(payment.id);
   };
 
   const handleDelete = (id: number) => {
     if (confirm("Are you sure you want to delete this payment record?")) {
-      setPaymentHistory((prev: any[]) => prev.filter(p => p.id !== id));
+      setPaymentHistory(prev => prev.filter(p => p.id !== id));
       toast.success("Payment record deleted");
     }
   };
@@ -232,6 +239,8 @@ export function ManualPaymentEntryPage() {
         return <DollarSign className="h-4 w-4" />;
     }
   };
+
+  const totalRecorded = paymentHistory.reduce((sum, p) => sum + p.amount, 0);
 
   return (
     <div className="space-y-6">
@@ -388,7 +397,7 @@ export function ManualPaymentEntryPage() {
               <Label htmlFor="paymentMethod">Payment Method *</Label>
               <Select
                 value={formData.paymentMethod}
-                onValueChange={(value: string) => handleInputChange("paymentMethod", value)}
+                onValueChange={(value) => handleInputChange("paymentMethod", value)}
               >
                 <SelectTrigger>
                   <SelectValue />

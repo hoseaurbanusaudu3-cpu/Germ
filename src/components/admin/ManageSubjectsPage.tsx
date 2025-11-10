@@ -1,12 +1,13 @@
 import { useState, useEffect, memo } from "react";
 import { 
-  Plus, Search, Trash2, BookOpen, Users, Link as LinkIcon,
+  Plus, Search, Edit, Trash2, BookOpen, Users, Link as LinkIcon,
   Check, AlertCircle, MoreVertical, UserPlus
 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { Badge } from "../ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
@@ -148,18 +149,19 @@ function ManageSubjectsPageComponent() {
   };
 
   const handleCreateSubject = async () => {
-    if (!formData.name || !formData.code) {
-      toast.error("Please fill all required fields");
+    if (!formData.name || !formData.code || !formData.department || !formData.level) {
+      toast.error("Please fill all required fields including school level");
       return;
     }
 
     try {
-      // Backend only accepts: name, code, is_core, status
       const subjectData = {
         name: formData.name,
         code: formData.code,
-        is_core: formData.isCore,
-        status: formData.status === 'Active' ? 'active' : 'inactive'
+        department: formData.department,
+        level: formData.level,
+        status: formData.status === 'Active' ? 'active' : 'inactive',
+        is_core: formData.isCore
       };
 
       const response = await subjectsAPI.create(subjectData);
@@ -176,18 +178,19 @@ function ManageSubjectsPageComponent() {
   };
 
   const handleEditSubject = async () => {
-    if (!selectedSubject || !formData.name || !formData.code) {
-      toast.error("Please fill all required fields");
+    if (!selectedSubject || !formData.name || !formData.code || !formData.department || !formData.level) {
+      toast.error("Please fill all required fields including school level");
       return;
     }
 
     try {
-      // Backend only accepts: name, code, is_core, status
       const subjectData = {
         name: formData.name,
         code: formData.code,
-        is_core: formData.isCore,
-        status: formData.status === 'Active' ? 'active' : 'inactive'
+        department: formData.department,
+        level: formData.level,
+        status: formData.status === 'Active' ? 'active' : 'inactive',
+        is_core: formData.isCore
       };
 
       const response = await subjectsAPI.update(selectedSubject.id, subjectData);
@@ -498,9 +501,9 @@ function ManageSubjectsPageComponent() {
 
             <div className="space-y-2">
               <Label className="text-white">Filter by Department</Label>
-              <Select value={filterDepartment} onValueChange={(value: string) => setFilterDepartment(value)}>
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Filter by department" />
+              <Select value={filterDepartment} onValueChange={setFilterDepartment}>
+                <SelectTrigger className="h-12 rounded-xl border border-white/10 bg-[#0F243E] text-white">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0F243E] border-white/10">
                   {departments.map(dept => (
@@ -514,9 +517,9 @@ function ManageSubjectsPageComponent() {
 
             <div className="space-y-2">
               <Label className="text-white">Filter by Status</Label>
-              <Select value={filterStatus} onValueChange={(value: string) => setFilterStatus(value)}>
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Filter by status" />
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="h-12 rounded-xl border border-white/10 bg-[#0F243E] text-white">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-[#0F243E] border-white/10">
                   <SelectItem value="All" className="text-white hover:bg-[#1E90FF]">All Status</SelectItem>

@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Label } from "../ui/label";
 import { Alert, AlertDescription } from "../ui/alert";
 import { useSchool } from "../../contexts/SchoolContext";
-import { toast } from "sonner";
+import { toast } from "sonner@2.0.3";
 
 export function ManageTeachersPage() {
   const { teachers, deleteTeacher, updateTeacher, classes, subjectAssignments } = useSchool();

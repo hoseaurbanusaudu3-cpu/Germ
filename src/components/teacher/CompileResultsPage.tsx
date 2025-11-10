@@ -18,7 +18,7 @@ import { Textarea } from "../ui/textarea";
 import { Badge } from "../ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { useSchool } from "../../contexts/SchoolContext";
-import { toast } from "sonner";
+import { toast } from "sonner@2.0.3";
 
 export function CompileResultsPage() {
   const {

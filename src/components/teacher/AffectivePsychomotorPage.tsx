@@ -8,7 +8,7 @@ import { Input } from "../ui/input";
 import { Badge } from "../ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { useSchool } from "../../contexts/SchoolContext";
-import { toast } from "sonner";
+import { toast } from "sonner@2.0.3";
 
 interface DomainRatings {
   value: number;

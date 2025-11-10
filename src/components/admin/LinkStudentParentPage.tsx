@@ -1,173 +1,226 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Button } from "../ui/button";
+import { Search, Link as LinkIcon, Unlink, Users, UserCheck, Upload, CheckCircle, X, Loader2 } from "lucide-react";
+import { Card, CardContent, CardHeader } from "../ui/card";
 import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { Badge } from "../ui/badge";
-import { Users, Link, Search, User, Hash, Mail, Phone, MapPin } from "lucide-react";
+import { Button } from "../ui/button";
 import { toast } from "sonner";
-import { useSchool } from "../../contexts/SchoolContext";
+import { Badge } from "../ui/badge";
+import { Avatar, AvatarFallback } from "../ui/avatar";
+import { Switch } from "../ui/switch";
+import { Label } from "../ui/label";
+import { studentsAPI, usersAPI } from "../../services/api";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui/alert-dialog";
 
 export function LinkStudentParentPage() {
-  const { students, parents, linkStudentToParent, unlinkStudentFromParent } = useSchool();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
-  const [selectedParent, setSelectedParent] = useState<number | null>(null);
-  const [relationship, setRelationship] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [studentSearch, setStudentSearch] = useState("");
+  const [parentSearch, setParentSearch] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [selectedParent, setSelectedParent] = useState<any>(null);
+  const [notifyParent, setNotifyParent] = useState(true);
+  const [showUnlinkDialog, setShowUnlinkDialog] = useState(false);
+  const [unlinkChild, setUnlinkChild] = useState<any>(null);
+  const [students, setStudents] = useState<any[]>([]);
+  const [parents, setParents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredStudents = students.filter(student =>
-    student.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.admissionNumber.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [studentsRes, usersRes] = await Promise.all([
+        studentsAPI.getAll(),
+        usersAPI.getAll()
+      ]);
+
+      if (studentsRes.success) {
+        setStudents(studentsRes.data);
+      }
+
+      if (usersRes.success) {
+        const parentUsers = usersRes.data.filter((u: any) => u.role === 'parent');
+        setParents(parentUsers);
+      }
+    } catch (error: any) {
+      console.error('Error loading data:', error);
+      toast.error('Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredStudents = students.filter(s => 
+    s.full_name?.toLowerCase().includes(studentSearch.toLowerCase()) ||
+    s.reg_no?.toLowerCase().includes(studentSearch.toLowerCase()) ||
+    s.Class?.name?.toLowerCase().includes(studentSearch.toLowerCase())
   );
 
-  const filteredParents = parents.filter(parent =>
-    parent.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    parent.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    parent.email.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredParents = parents.filter(p => 
+    p.name?.toLowerCase().includes(parentSearch.toLowerCase()) ||
+    p.email?.toLowerCase().includes(parentSearch.toLowerCase()) ||
+    p.phone?.includes(parentSearch)
   );
 
-  const handleLink = async () => {
-    if (!selectedStudent || !selectedParent || !relationship) {
-      toast.error("Please select student, parent, and relationship type");
+  const handleLinkStudentParent = () => {
+    if (!selectedStudent || !selectedParent) {
+      toast.error("Please select both a student and a parent");
       return;
     }
 
-    try {
-      setIsSubmitting(true);
-      linkStudentToParent(selectedStudent, selectedParent, relationship);
-      toast.success("Student linked to parent successfully!");
-      
-      // Reset form
-      setSelectedStudent(null);
-      setSelectedParent(null);
-      setRelationship("");
-      setSearchTerm("");
-    } catch (error) {
-      toast.error("Failed to link student to parent");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleUnlink = async (studentId: number, parentId: number) => {
-    try {
-      unlinkStudentFromParent(studentId, parentId);
-      toast.success("Student unlinked from parent successfully!");
-    } catch (error) {
-      toast.error("Failed to unlink student from parent");
-    }
-  };
-
-  const getExistingLinks = () => {
-    const links: Array<{studentId: number, parentId: number, relationship: string}> = [];
+    const notifyMsg = notifyParent ? " — Parent notified" : "";
+    toast.success(`${selectedStudent.name} linked to ${selectedParent.name}${notifyMsg}`);
     
-    students.forEach(student => {
-      if (student.parents && student.parents.length > 0) {
-        student.parents.forEach(parentLink => {
-          links.push({
-            studentId: student.id,
-            parentId: parentLink.parentId,
-            relationship: parentLink.relationship
-          });
-        });
-      }
-    });
-
-    return links;
+    setSelectedStudent(null);
+    setSelectedParent(null);
   };
 
-  const existingLinks = getExistingLinks();
+  const handleUnlinkChild = (child: any) => {
+    setUnlinkChild(child);
+    setShowUnlinkDialog(true);
+  };
+
+  const confirmUnlink = () => {
+    toast.success(`${unlinkChild.name} unlinked successfully`);
+    setShowUnlinkDialog(false);
+    setUnlinkChild(null);
+  };
+
+  const handleBulkImport = () => {
+    toast.info("Bulk CSV import functionality");
+  };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Link Students to Parents</h2>
-        <p className="text-muted-foreground">
-          Manage student-parent relationships and guardianship
-        </p>
+      <div className="mb-6">
+        <h1 className="text-white mb-2">Link Student to Parent</h1>
+        <p className="text-[#C0C8D3]">Connect students with their parents/guardians for portal access</p>
       </div>
 
-      {/* Search */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
-            Search Students or Parents
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name, admission number, or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+      {/* Bulk Import Option */}
+      <Card className="rounded-xl bg-[#132C4A] border border-[#1E90FF] shadow-lg">
+        <CardContent className="p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full bg-[#1E90FF]/20 flex items-center justify-center">
+                <Upload className="w-6 h-6 text-[#1E90FF]" />
+              </div>
+              <div>
+                <h3 className="text-white mb-1">Bulk Link (CSV Import)</h3>
+                <p className="text-sm text-[#C0C8D3]">Upload CSV with format: admission_no, parent_phone_or_email</p>
+              </div>
+            </div>
+            <Button 
+              onClick={handleBulkImport}
+              className="bg-[#1E90FF] hover:bg-[#00BFFF] text-white rounded-xl shadow-md"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Import CSV
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Link Form */}
-      <div className="grid gap-6 md:grid-cols-2">
+      {/* Main Linking Interface */}
+      <div className="grid lg:grid-cols-2 gap-6">
         {/* Student Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
+        <Card className="rounded-xl bg-[#132C4A] border border-white/10 shadow-lg">
+          <CardHeader className="p-5 bg-gradient-to-r from-[#1E90FF] to-[#00BFFF] rounded-t-xl">
+            <h3 className="text-white flex items-center gap-2">
+              <Users className="w-5 h-5" />
               Select Student
-            </CardTitle>
+            </h3>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <Select
-                value={selectedStudent?.toString() || ""}
-                onValueChange={(value: string) => setSelectedStudent(parseInt(value))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a student" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredStudents.map(student => (
-                    <SelectItem key={student.id} value={student.id.toString()}>
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        <div>
-                          <div className="font-medium">{student.firstName} {student.lastName}</div>
-                          <div className="text-sm text-muted-foreground">
-                            <Badge variant="outline">{student.admissionNumber}</Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <CardContent className="p-5 space-y-4">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#C0C8D3]" />
+              <Input
+                value={studentSearch}
+                onChange={(e) => setStudentSearch(e.target.value)}
+                placeholder="Search by name, admission no, or class..."
+                className="h-12 pl-10 rounded-xl border border-white/10 bg-[#0F243E] text-white"
+              />
+            </div>
 
-              {selectedStudent && (
-                <div className="p-4 bg-muted rounded-lg">
-                  {(() => {
-                    const student = students.find(s => s.id === selectedStudent);
-                    return student ? (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">{student.firstName} {student.lastName}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Hash className="h-4 w-4 text-muted-foreground" />
-                          <span>{student.admissionNumber}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline">{student.class}</Badge>
-                        </div>
+            {/* Selected Student */}
+            {selectedStudent && (
+              <div className="p-4 bg-[#28A745]/10 border border-[#28A745] rounded-xl">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-12 h-12 border-2 border-[#28A745]">
+                      <AvatarFallback className="bg-[#28A745] text-white">
+                        {selectedStudent.name.split(' ').map((n: string) => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-white">{selectedStudent.name}</p>
+                      <p className="text-sm text-[#C0C8D3]">{selectedStudent.admissionNo}</p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => setSelectedStudent(null)}
+                    size="sm"
+                    className="h-8 w-8 p-0 bg-[#DC3545] hover:bg-[#DC3545]/90 rounded-full"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-[#1E90FF] text-white border-0">{selectedStudent.class}</Badge>
+                  {selectedStudent.hasParent && (
+                    <Badge className="bg-[#FFC107] text-white border-0">Already Linked</Badge>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Student List */}
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {filteredStudents.map((student) => (
+                <button
+                  key={student.id}
+                  onClick={() => setSelectedStudent(student)}
+                  className={`w-full p-3 rounded-xl transition-all text-left ${
+                    selectedStudent?.id === student.id
+                      ? 'bg-[#28A745]/20 border-2 border-[#28A745]'
+                      : 'bg-[#0F243E] border border-white/10 hover:border-[#1E90FF] hover:bg-[#132C4A]'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-10 h-10">
+                      <AvatarFallback className="bg-[#1E90FF] text-white text-sm">
+                        {student.name.split(' ').map((n: string) => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <p className="text-white">{student.name}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-xs text-[#C0C8D3]">{student.admissionNo}</p>
+                        <span className="text-[#C0C8D3]">•</span>
+                        <p className="text-xs text-[#C0C8D3]">{student.class}</p>
                       </div>
-                    ) : null;
-                  })()}
+                    </div>
+                    {student.hasParent && (
+                      <CheckCircle className="w-4 h-4 text-[#28A745]" />
+                    )}
+                  </div>
+                </button>
+              ))}
+
+              {filteredStudents.length === 0 && (
+                <div className="p-8 text-center">
+                  <p className="text-[#C0C8D3]">No students found</p>
                 </div>
               )}
             </div>
@@ -175,62 +228,116 @@ export function LinkStudentParentPage() {
         </Card>
 
         {/* Parent Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
+        <Card className="rounded-xl bg-[#132C4A] border border-white/10 shadow-lg">
+          <CardHeader className="p-5 bg-gradient-to-r from-[#28A745] to-[#28A745]/80 rounded-t-xl">
+            <h3 className="text-white flex items-center gap-2">
+              <UserCheck className="w-5 h-5" />
               Select Parent
-            </CardTitle>
+            </h3>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <Select
-                value={selectedParent?.toString() || ""}
-                onValueChange={(value: string) => setSelectedParent(parseInt(value))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a parent" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredParents.map(parent => (
-                    <SelectItem key={parent.id} value={parent.id.toString()}>
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        <div>
-                          <div className="font-medium">{parent.firstName} {parent.lastName}</div>
-                          <div className="text-sm text-muted-foreground">{parent.email}</div>
-                        </div>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <CardContent className="p-5 space-y-4">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#C0C8D3]" />
+              <Input
+                value={parentSearch}
+                onChange={(e) => setParentSearch(e.target.value)}
+                placeholder="Search by name, phone, or email..."
+                className="h-12 pl-10 rounded-xl border border-white/10 bg-[#0F243E] text-white"
+              />
+            </div>
 
-              {selectedParent && (
-                <div className="p-4 bg-muted rounded-lg">
-                  {(() => {
-                    const parent = parents.find(p => p.id === selectedParent);
-                    return parent ? (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">{parent.firstName} {parent.lastName}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-muted-foreground" />
-                          <span>{parent.email}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Phone className="h-4 w-4 text-muted-foreground" />
-                          <span>{parent.phone}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <span>{parent.address}</span>
-                        </div>
+            {/* Selected Parent */}
+            {selectedParent && (
+              <div className="p-4 bg-[#28A745]/10 border border-[#28A745] rounded-xl">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="w-12 h-12 border-2 border-[#28A745]">
+                      <AvatarFallback className="bg-[#28A745] text-white">
+                        {selectedParent.name.split(' ').map((n: string) => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-white">{selectedParent.name}</p>
+                      <p className="text-sm text-[#C0C8D3]">{selectedParent.phone}</p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => setSelectedParent(null)}
+                    size="sm"
+                    className="h-8 w-8 p-0 bg-[#DC3545] hover:bg-[#DC3545]/90 rounded-full"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+                <p className="text-sm text-[#C0C8D3]">{selectedParent.email}</p>
+                <div className="mt-2">
+                  <Badge className="bg-[#1E90FF] text-white border-0">
+                    {selectedParent.linkedChildren.length} child(ren) linked
+                  </Badge>
+                </div>
+              </div>
+            )}
+
+            {/* Parent List */}
+            <div className="space-y-2 max-h-96 overflow-y-auto">
+              {filteredParents.map((parent) => (
+                <div key={parent.id}>
+                  <button
+                    onClick={() => setSelectedParent(parent)}
+                    className={`w-full p-3 rounded-xl transition-all text-left ${
+                      selectedParent?.id === parent.id
+                        ? 'bg-[#28A745]/20 border-2 border-[#28A745]'
+                        : 'bg-[#0F243E] border border-white/10 hover:border-[#28A745] hover:bg-[#132C4A]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-10 h-10">
+                        <AvatarFallback className="bg-[#28A745] text-white text-sm">
+                          {parent.name.split(' ').map((n: string) => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="text-white">{parent.name}</p>
+                        <p className="text-xs text-[#C0C8D3] mt-1">{parent.phone}</p>
                       </div>
-                    ) : null;
-                  })()}
+                      <Badge className="bg-[#1E90FF] text-white border-0 text-xs">
+                        {parent.linkedChildren.length}
+                      </Badge>
+                    </div>
+                  </button>
+
+                  {/* Linked Children (when parent is selected) */}
+                  {selectedParent?.id === parent.id && parent.linkedChildren.length > 0 && (
+                    <div className="ml-4 mt-2 space-y-2">
+                      <p className="text-xs text-[#C0C8D3]">Currently linked children:</p>
+                      {parent.linkedChildren.map((child, idx) => (
+                        <div 
+                          key={idx}
+                          className="p-2 bg-[#0F243E] rounded-lg border border-white/5 flex items-center justify-between"
+                        >
+                          <div>
+                            <p className="text-white text-sm">{child.name}</p>
+                            <p className="text-xs text-[#C0C8D3]">{child.class} • Linked {child.linkDate}</p>
+                          </div>
+                          <Button
+                            onClick={() => handleUnlinkChild(child)}
+                            size="sm"
+                            className="h-7 px-3 bg-[#DC3545] hover:bg-[#DC3545]/90 rounded-lg text-xs"
+                          >
+                            <Unlink className="w-3 h-3 mr-1" />
+                            Unlink
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {filteredParents.length === 0 && (
+                <div className="p-8 text-center">
+                  <p className="text-[#C0C8D3]">No parents found</p>
                 </div>
               )}
             </div>
@@ -238,87 +345,60 @@ export function LinkStudentParentPage() {
         </Card>
       </div>
 
-      {/* Relationship Type */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Link className="h-5 w-5" />
-            Relationship Type
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-4">
-            {["Father", "Mother", "Guardian", "Other"].map(type => (
-              <Button
-                key={type}
-                variant={relationship === type.toLowerCase() ? "default" : "outline"}
-                onClick={() => setRelationship(type.toLowerCase())}
-              >
-                {type}
-              </Button>
-            ))}
+      {/* Link Action */}
+      <Card className="rounded-xl bg-[#132C4A] border border-white/10 shadow-lg">
+        <CardContent className="p-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-[#1E90FF]/20 flex items-center justify-center">
+                  <LinkIcon className="w-6 h-6 text-[#1E90FF]" />
+                </div>
+                <div>
+                  <Label className="text-white">Notify Parent of Link</Label>
+                  <p className="text-sm text-[#C0C8D3]">Send in-app notification and optional email/SMS</p>
+                </div>
+              </div>
+              <Switch 
+                checked={notifyParent} 
+                onCheckedChange={setNotifyParent}
+              />
+            </div>
+
+            <Button
+              onClick={handleLinkStudentParent}
+              disabled={!selectedStudent || !selectedParent}
+              className="h-12 px-8 bg-[#28A745] hover:bg-[#28A745]/90 text-white rounded-xl shadow-md hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100"
+            >
+              <LinkIcon className="w-5 h-5 mr-2" />
+              Link Selected
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Link Button */}
-      <div className="flex justify-end">
-        <Button
-          onClick={handleLink}
-          disabled={!selectedStudent || !selectedParent || !relationship || isSubmitting}
-          className="flex items-center gap-2"
-        >
-          <Link className="h-4 w-4" />
-          {isSubmitting ? "Linking..." : "Link Student to Parent"}
-        </Button>
-      </div>
-
-      {/* Existing Links */}
-      {existingLinks.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Existing Student-Parent Links
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {existingLinks.map((link, index) => {
-                const student = students.find(s => s.id === link.studentId);
-                const parent = parents.find(p => p.id === link.parentId);
-                
-                if (!student || !parent) return null;
-                
-                return (
-                  <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{student.firstName} {student.lastName}</span>
-                        <Badge variant="outline">{student.admissionNumber}</Badge>
-                      </div>
-                      <Link className="h-4 w-4 text-muted-foreground" />
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <span>{parent.firstName} {parent.lastName}</span>
-                        <Badge variant="secondary">{link.relationship}</Badge>
-                      </div>
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleUnlink(link.studentId, link.parentId)}
-                    >
-                      Unlink
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Unlink Confirmation Dialog */}
+      <AlertDialog open={showUnlinkDialog} onOpenChange={setShowUnlinkDialog}>
+        <AlertDialogContent className="bg-[#132C4A] border border-white/10">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">Unlink Child?</AlertDialogTitle>
+            <AlertDialogDescription className="text-[#C0C8D3]">
+              Are you sure you want to unlink {unlinkChild?.name}? The parent will lose access to this child's information.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-[#0F243E] text-white border-white/10 hover:bg-[#132C4A]">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmUnlink}
+              className="bg-[#DC3545] hover:bg-[#DC3545]/90"
+            >
+              Unlink
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

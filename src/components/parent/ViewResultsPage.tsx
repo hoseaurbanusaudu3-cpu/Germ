@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Label } from '../ui/label';
 import { StudentResultSheet } from '../StudentResultSheet';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 export function ViewResultsPage() {
   const {

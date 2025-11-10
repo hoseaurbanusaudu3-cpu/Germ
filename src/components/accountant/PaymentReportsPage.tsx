@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Label } from "../ui/label";
 import { Badge } from "../ui/badge";
 import { useSchool } from "../../contexts/SchoolContext";
-import { toast } from "sonner";
+import { toast } from "sonner@2.0.3";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 

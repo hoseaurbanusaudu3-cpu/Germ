@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSchool } from '../../contexts/SchoolContext';
-import { Plus, Search, Trash2, BookOpen, Users, X, Check, AlertCircle, Award, Clock } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, BookOpen, Users, X, Check, AlertCircle, Award, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Checkbox } from '../ui/checkbox';
 import { Alert, AlertDescription } from '../ui/alert';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 export function ManageTeacherAssignmentsPage() {
   const {

@@ -10,7 +10,7 @@ import { Textarea } from '../ui/textarea';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { StudentResultSheet } from '../StudentResultSheet';
-import { toast } from 'sonner';
+import { toast } from 'sonner@2.0.3';
 
 export function ApproveResultsPage() {
   const {
@@ -21,6 +21,7 @@ export function ApproveResultsPage() {
     subjectAssignments,
     compiledResults,
     affectiveDomains,
+    psychomotorDomains,
     getPendingApprovals,
     approveResult,
     rejectResult,
@@ -196,9 +197,9 @@ export function ApproveResultsPage() {
             {/* School Level Filter */}
             <div>
               <label className="text-sm text-gray-600 mb-2 block">School Level</label>
-              <Select value={selectedClassLevel} onValueChange={(value: string) => {
+              <Select value={selectedClassLevel} onValueChange={(value) => {
                 setSelectedClassLevel(value);
-                setSelectedClass('all'); // Reset class filter when level changes
+                setSelectedClass('all');
               }}>
                 <SelectTrigger className="rounded-xl border-gray-300">
                   <SelectValue placeholder="Select school level" />

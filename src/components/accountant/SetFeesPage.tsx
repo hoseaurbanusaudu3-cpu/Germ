@@ -7,7 +7,7 @@ import { Label } from "../ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Alert, AlertDescription } from "../ui/alert";
 import { useSchool } from "../../contexts/SchoolContext";
-import { toast } from "sonner";
+import { toast } from "sonner@2.0.3";
 
 export function SetFeesPage() {
   const { 

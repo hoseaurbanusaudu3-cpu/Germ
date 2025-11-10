@@ -79,8 +79,8 @@ export default function App() {
     handlePageTransition("landing", "");
   };
 
-  const handleLogin = (role: string) => {
-    handlePageTransition("dashboard", role as Role);
+  const handleLogin = (role: Role) => {
+    handlePageTransition("dashboard", role);
   };
 
   const handleLogout = () => {
@@ -132,7 +132,9 @@ export default function App() {
           <ResultReportCard onClose={handleCloseReportCard} />
         )}
 
-
+        {currentPage === "test-forms" && (
+          <TestFormsPage />
+        )}
 
         <Toaster />
       </div>

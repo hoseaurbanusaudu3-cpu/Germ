@@ -7,7 +7,7 @@ import { Label } from "../ui/label";
 import { Checkbox } from "../ui/checkbox";
 import { Alert, AlertDescription } from "../ui/alert";
 import { useSchool } from "../../contexts/SchoolContext";
-import { toast } from "sonner";
+import { toast } from "sonner@2.0.3";
 
 export function BankAccountSettingsPage() {
   const { bankAccountSettings, updateBankAccountSettings, currentUser } = useSchool();
@@ -154,7 +154,7 @@ export function BankAccountSettingsPage() {
                 <Checkbox
                   id="bankTransfer"
                   checked={formData.paymentMethods.bankTransfer}
-                  onCheckedChange={(checked: boolean | 'indeterminate') => handlePaymentMethodChange("bankTransfer", checked as boolean)}
+                  onCheckedChange={(checked) => handlePaymentMethodChange("bankTransfer", checked as boolean)}
                 />
                 <Label htmlFor="bankTransfer" className="text-[#1F2937] cursor-pointer">
                   Bank Transfer
@@ -168,7 +168,7 @@ export function BankAccountSettingsPage() {
                 <Checkbox
                   id="onlinePayment"
                   checked={formData.paymentMethods.onlinePayment}
-                  onCheckedChange={(checked: boolean | 'indeterminate') => handlePaymentMethodChange("onlinePayment", checked as boolean)}
+                  onCheckedChange={(checked) => handlePaymentMethodChange("onlinePayment", checked as boolean)}
                 />
                 <Label htmlFor="onlinePayment" className="text-[#1F2937] cursor-pointer">
                   Online Payment Gateway
@@ -182,7 +182,7 @@ export function BankAccountSettingsPage() {
                 <Checkbox
                   id="cash"
                   checked={formData.paymentMethods.cash}
-                  onCheckedChange={(checked: boolean | 'indeterminate') => handlePaymentMethodChange("cash", checked as boolean)}
+                  onCheckedChange={(checked) => handlePaymentMethodChange("cash", checked as boolean)}
                 />
                 <Label htmlFor="cash" className="text-[#1F2937] cursor-pointer">
                   Cash Payment
