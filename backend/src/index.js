@@ -31,6 +31,10 @@ const activityLogRoutes = require('./routes/activityLogRoutes');
 
 // Initialize Express app
 const app = express();
+
+// Trust proxy for Render deployment
+app.set('trust proxy', 1);
+
 const server = http.createServer(app);
 
 // Initialize Socket.io
@@ -135,11 +139,10 @@ const startServer = async () => {
     await sequelize.authenticate();
     console.log('✓ Database connection established successfully');
 
-    // Sync database (use migrations in production)
-    if (config.env === 'development') {
-      await sequelize.sync({ alter: false });
-      console.log('✓ Database synchronized');
-    }
+    // Sync database (create tables if they don't exist)
+    // Set alter: true to update existing tables, or force: true to recreate
+    await sequelize.sync({ alter: false });
+    console.log('✓ Database synchronized');
 
     // Start server
     server.listen(PORT, () => {
