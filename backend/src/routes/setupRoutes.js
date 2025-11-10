@@ -129,9 +129,13 @@ router.post('/create-admin', async (req, res) => {
     const existingAdmin = await User.findOne({ where: { role: 'admin' } });
     
     if (existingAdmin) {
-      return res.status(400).json({
-        success: false,
-        message: 'Admin user already exists'
+      return res.json({
+        success: true,
+        message: 'Admin user already exists',
+        data: {
+          email: existingAdmin.email,
+          note: 'Use this email to login'
+        }
       });
     }
 
@@ -159,9 +163,13 @@ router.post('/create-admin', async (req, res) => {
       message: 'Admin user created successfully',
       data: {
         id: admin.id,
-        name: admin.name,
         email: admin.email,
-        role: admin.role
+        role: admin.role,
+        credentials: {
+          email: adminEmail,
+          password: adminPassword
+        },
+        note: 'Use these credentials to login'
       }
     });
   } catch (error) {
