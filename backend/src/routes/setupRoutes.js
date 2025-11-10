@@ -3,6 +3,39 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const { User } = require('../models');
 
+// Initialize database - Force create all tables
+router.post('/init-database', async (req, res) => {
+  try {
+    const { sequelize } = require('../models');
+    
+    // Force sync database - this will create all tables
+    await sequelize.sync({ force: false, alter: true });
+    
+    // Get list of tables
+    const [tables] = await sequelize.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' OR table_schema = DATABASE()
+    `);
+    
+    return res.json({
+      success: true,
+      message: 'Database initialized successfully',
+      data: {
+        tablesCreated: tables.length,
+        tables: tables.map(t => t.table_name || t.TABLE_NAME)
+      }
+    });
+  } catch (error) {
+    console.error('Database init error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to initialize database',
+      error: error.message
+    });
+  }
+});
+
 // Check admin status
 router.get('/check-admin', async (req, res) => {
   try {
