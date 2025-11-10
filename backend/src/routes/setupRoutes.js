@@ -46,14 +46,21 @@ router.post('/create-admin', async (req, res) => {
       });
     }
 
-    // Create admin user
-    const hashedPassword = await bcrypt.hash('admin123', 10);
+    // Create admin user with credentials from request or defaults
+    const { email, password, firstName, lastName } = req.body;
+    
+    const adminEmail = email || 'admin@gra-gm.top';
+    const adminPassword = password || 'Admin123!';
+    const adminFirstName = firstName || 'Admin';
+    const adminLastName = lastName || 'User';
+    
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
     
     const admin = await User.create({
       role: 'admin',
-      name: 'System Administrator',
-      email: 'admin@gra.edu.ng',
-      phone: '+2348012345678',
+      email: adminEmail,
+      first_name: adminFirstName,
+      last_name: adminLastName,
       password_hash: hashedPassword,
       status: 'active'
     });
