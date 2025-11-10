@@ -3,13 +3,14 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const { User } = require('../models');
 
-// Initialize database - Force create all tables
-router.post('/init-database', async (req, res) => {
+// Diagnostic endpoint - Check database status
+router.get('/diagnostic', async (req, res) => {
   try {
     const { sequelize } = require('../models');
+    const { Class } = require('../models');
     
-    // Force sync database - this will create all tables
-    await sequelize.sync({ force: false, alter: true });
+    // Test database connection
+    await sequelize.authenticate();
     
     // Get list of tables
     const [tables] = await sequelize.query(`
@@ -17,6 +18,60 @@ router.post('/init-database', async (req, res) => {
       FROM information_schema.tables 
       WHERE table_schema = 'public' OR table_schema = DATABASE()
     `);
+    
+    // Count records in key tables
+    let classCount = 0;
+    let userCount = 0;
+    try {
+      classCount = await Class.count();
+      userCount = await User.count();
+    } catch (e) {
+      // Tables might not exist yet
+    }
+    
+    return res.json({
+      success: true,
+      message: 'Diagnostic complete',
+      data: {
+        databaseConnected: true,
+        tablesFound: tables.length,
+        tables: tables.map(t => t.table_name || t.TABLE_NAME),
+        recordCounts: {
+          classes: classCount,
+          users: userCount
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Diagnostic error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Diagnostic failed',
+      error: error.message
+    });
+  }
+});
+
+// Initialize database - Force create all tables
+router.post('/init-database', async (req, res) => {
+  try {
+    const { sequelize } = require('../models');
+    
+    console.log('Starting database sync...');
+    
+    // Force sync database - this will create all tables
+    await sequelize.sync({ force: false, alter: true });
+    
+    console.log('Database sync complete');
+    
+    // Get list of tables
+    const [tables] = await sequelize.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' OR table_schema = DATABASE()
+    `);
+    
+    console.log('Tables found:', tables.length);
     
     return res.json({
       success: true,
@@ -31,7 +86,8 @@ router.post('/init-database', async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to initialize database',
-      error: error.message
+      error: error.message,
+      stack: error.stack
     });
   }
 });
