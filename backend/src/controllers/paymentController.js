@@ -1,6 +1,7 @@
 const { Payment, Student, Class, Session, Term, User } = require('../models');
 const { successResponse, errorResponse, paginatedResponse } = require('../utils/responseFormatter');
 const { logActivity } = require('../middleware/activityLogger');
+const notificationService = require('../services/notificationService');
 
 const getPayments = async (req, res, next) => {
   try {
@@ -124,7 +125,22 @@ const verifyPayment = async (req, res, next) => {
 
     await logActivity(req, 'VERIFY_PAYMENT', 'payments', payment.id);
 
-    // TODO: Send notification to parent
+    // Notify parent of payment verification
+    try {
+      const io = req.app.get('io');
+      const student = await Student.findByPk(payment.student_id);
+      if (student?.parent_id) {
+        await notificationService.notifyPaymentVerification(
+          io,
+          req.user.id,
+          student.parent_id,
+          payment.amount,
+          'verified'
+        );
+      }
+    } catch (notifyErr) {
+      console.error('Failed to notify parent of payment verification:', notifyErr);
+    }
 
     return successResponse(res, 200, 'Payment verified successfully', payment);
   } catch (error) {
@@ -156,7 +172,22 @@ const rejectPayment = async (req, res, next) => {
 
     await logActivity(req, 'REJECT_PAYMENT', 'payments', payment.id, { reason });
 
-    // TODO: Send notification to parent
+    // Notify parent of payment rejection
+    try {
+      const io = req.app.get('io');
+      const student = await Student.findByPk(payment.student_id);
+      if (student?.parent_id) {
+        await notificationService.notifyPaymentVerification(
+          io,
+          req.user.id,
+          student.parent_id,
+          payment.amount,
+          'rejected'
+        );
+      }
+    } catch (notifyErr) {
+      console.error('Failed to notify parent of payment rejection:', notifyErr);
+    }
 
     return successResponse(res, 200, 'Payment rejected', payment);
   } catch (error) {

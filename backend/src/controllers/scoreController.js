@@ -3,6 +3,7 @@ const { successResponse, errorResponse } = require('../utils/responseFormatter')
 const { calculateGrade, getGradeRemark, calculateClassStats, validateScores } = require('../utils/gradeCalculator');
 const { logActivity } = require('../middleware/activityLogger');
 const csvService = require('../services/csvService');
+const notificationService = require('../services/notificationService');
 
 /**
  * Get scores with filters
@@ -206,7 +207,22 @@ const submitScores = async (req, res, next) => {
 
     await logActivity(req, 'SUBMIT_SCORES', 'scores', null, { count: scoreIds.length });
 
-    // TODO: Send notification to class teacher
+    // Notify class teacher that scores were submitted
+    try {
+      const io = req.app.get('io');
+      const firstScore = await Score.findByPk(scoreIds[0]);
+      if (firstScore) {
+        const subject = await Subject.findByPk(firstScore.subject_id);
+        await notificationService.notifyScoreSubmission(
+          io,
+          req.user.id,
+          firstScore.class_id,
+          subject?.name || 'Subject'
+        );
+      }
+    } catch (notifyErr) {
+      console.error('Failed to notify class teacher of score submission:', notifyErr);
+    }
 
     return successResponse(res, 200, 'Scores submitted successfully');
   } catch (error) {

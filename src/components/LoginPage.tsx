@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { School, User, Lock } from "lucide-react";
+import { User, Lock } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Card, CardContent, CardHeader } from "./ui/card";
-import schoolLogo from "figma:asset/0f38946e273b623e7cb0b865c2f2fe194a9e92ea.png";
+import schoolLogo from "../assets/0f38946e273b623e7cb0b865c2f2fe194a9e92ea.png";
 
 interface LoginPageProps {
   onLogin: (role: string) => void;

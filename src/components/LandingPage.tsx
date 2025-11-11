@@ -2,7 +2,7 @@ import { School, BookOpen, Users, Award, Mail, Phone, MapPin, Facebook, Twitter,
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { useState } from "react";
-import schoolLogo from "figma:asset/0f38946e273b623e7cb0b865c2f2fe194a9e92ea.png";
+import schoolLogo from "../assets/0f38946e273b623e7cb0b865c2f2fe194a9e92ea.png";
 
 interface LandingPageProps {
   onNavigateToLogin: () => void;

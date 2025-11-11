@@ -1,8 +1,7 @@
 const { CompiledResult, Student, Class, Term, Session, Score, Subject, Affective, Psychomotor } = require('../models');
 const { successResponse, errorResponse } = require('../utils/responseFormatter');
 const { logActivity } = require('../middleware/activityLogger');
-const pdfService = require('../services/pdfService');
-const config = require('../config');
+const notificationService = require('../services/notificationService');
 
 const getCompiledResults = async (req, res, next) => {
   try {
@@ -145,7 +144,20 @@ const submitResult = async (req, res, next) => {
 
     await logActivity(req, 'SUBMIT_RESULT', 'compiled_results', result.id);
 
-    // TODO: Send notification to admin
+    // Send notification to admin that results were submitted
+    try {
+      const io = req.app.get('io');
+      const klass = await Class.findByPk(result.class_id);
+      const classTeacherId = klass?.class_teacher_id || req.user.id;
+      await notificationService.notifyResultSubmission(
+        io,
+        classTeacherId,
+        result.class_id,
+        klass?.name || 'Class'
+      );
+    } catch (notifyErr) {
+      console.error('Failed to notify admin of result submission:', notifyErr);
+    }
 
     return successResponse(res, 200, 'Result submitted for approval', result);
   } catch (error) {
@@ -196,7 +208,21 @@ const approveResult = async (req, res, next) => {
 
     await logActivity(req, 'APPROVE_RESULT', 'compiled_results', result.id);
 
-    // TODO: Send notification to parent
+    // Notify parent that result was approved
+    try {
+      const io = req.app.get('io');
+      const student = await Student.findByPk(result.student_id);
+      if (student?.parent_id) {
+        await notificationService.notifyResultApproval(
+          io,
+          req.user.id,
+          student.parent_id,
+          student.full_name
+        );
+      }
+    } catch (notifyErr) {
+      console.error('Failed to notify parent of result approval:', notifyErr);
+    }
 
     return successResponse(res, 200, 'Result approved successfully', result);
   } catch (error) {
@@ -222,7 +248,23 @@ const rejectResult = async (req, res, next) => {
 
     await logActivity(req, 'REJECT_RESULT', 'compiled_results', result.id, { reason });
 
-    // TODO: Send notification to class teacher
+    // Notify class teacher of rejection
+    try {
+      const io = req.app.get('io');
+      const klass = await Class.findByPk(result.class_id);
+      if (klass?.class_teacher_id) {
+        await notificationService.sendNotification(io, {
+          sender_id: req.user.id,
+          receiver_id: klass.class_teacher_id,
+          title: 'Result Rejected',
+          message: `Result for student ID ${result.student_id} was rejected: ${reason}`,
+          type: 'warning',
+          link: `/compiled/${result.class_id}`
+        });
+      }
+    } catch (notifyErr) {
+      console.error('Failed to notify class teacher of result rejection:', notifyErr);
+    }
 
     return successResponse(res, 200, 'Result rejected', result);
   } catch (error) {
@@ -305,6 +347,10 @@ const downloadResultPDF = async (req, res, next) => {
       },
       include: [{ model: Subject }]
     });
+
+    // Lazy-load PDF service to avoid startup issues when dependencies are missing
+    const pdfService = require('../services/pdfService');
+    const config = require('../config');
 
     // Generate PDF
     const pdfBuffer = await pdfService.generateResultPDF({
